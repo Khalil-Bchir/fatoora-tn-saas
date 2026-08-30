@@ -241,27 +241,30 @@ export default function OnboardingPage() {
           <div className="space-y-4">
             <div className="border-b border-zinc-100 dark:border-zinc-800 pb-3">
               <h3 className="text-base font-bold text-zinc-900 dark:text-white">
-                Cachet Numérique & Signature
+                Cachet & Signature Officiels
               </h3>
               <p className="text-xs text-zinc-500">
-                Ces éléments seront automatiquement apposés en bas de chaque facture générée et PDF.
+                En Tunisie, appliquez votre cachet sur papier blanc, signez au stylo dessus, puis scannez ou photographiez le fichier.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/50">
               <MediaUploader
-                label="Cachet de l'Entreprise"
+                label="Cachet & Signature Officiel (Recommandé)"
                 folder="stamps"
                 value={formData.stampUrl}
                 onChange={(url) => setFormData({ ...formData, stampUrl: url })}
-                hint="Format PNG transparent recommandé (max 5 MB)"
+                hint="Fichier unique contenant votre cachet physique signé (PNG transparent conseillé, max 5 MB)"
               />
+            </div>
+
+            <div className="pt-1">
               <MediaUploader
-                label="Signature du Gérant / Responsable"
+                label="Signature Manuscrite Séparée (Optionnel)"
                 folder="signatures"
                 value={formData.signatureUrl}
                 onChange={(url) => setFormData({ ...formData, signatureUrl: url })}
-                hint="Signature scannée sur fond transparent (max 5 MB)"
+                hint="À remplir uniquement si vous disposez d'un fichier de signature distinct du cachet"
               />
             </div>
           </div>

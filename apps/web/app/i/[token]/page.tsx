@@ -265,20 +265,30 @@ export default function PublicInvoicePage() {
 
             <div className="flex flex-col items-center sm:items-end justify-center">
               <p className="font-bold text-muted-foreground mb-2">Cachet et Signature de l'émetteur :</p>
-              <div className="flex items-center gap-3">
-                {org?.stampImageUrl && (
+              <div className="flex items-center justify-end">
+                {org?.stampImageUrl && org?.signatureImageUrl ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={org.stampImageUrl}
+                      alt="Cachet"
+                      className="h-20 w-auto object-contain opacity-95"
+                    />
+                    <img
+                      src={org.signatureImageUrl}
+                      alt="Signature"
+                      className="absolute inset-0 h-16 w-auto object-contain -rotate-6 translate-x-2 translate-y-1 mix-blend-multiply"
+                    />
+                  </div>
+                ) : org?.stampImageUrl || org?.signatureImageUrl ? (
                   <img
-                    src={org.stampImageUrl}
-                    alt="Cachet"
-                    className="h-20 w-auto object-contain border rounded p-1 bg-white"
+                    src={org.stampImageUrl || org.signatureImageUrl || ''}
+                    alt="Cachet & Signature"
+                    className="h-20 w-auto object-contain"
                   />
-                )}
-                {org?.signatureImageUrl && (
-                  <img
-                    src={org.signatureImageUrl}
-                    alt="Signature"
-                    className="h-20 w-auto object-contain border rounded p-1 bg-white"
-                  />
+                ) : (
+                  <div className="h-16 w-28 border border-dashed rounded flex items-center justify-center text-[10px] text-muted-foreground text-center">
+                    Cachet & Signature
+                  </div>
                 )}
               </div>
             </div>

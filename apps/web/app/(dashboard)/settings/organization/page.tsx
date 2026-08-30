@@ -81,6 +81,7 @@ export default function OrganizationSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [savedSuccess, setSavedSuccess] = useState(false)
   const [activeTab, setActiveTab] = useState('identity')
+  const [hasSeparateSignature, setHasSeparateSignature] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -506,34 +507,63 @@ export default function OrganizationSettingsPage() {
               </div>
             </TabsContent>
 
-            {/* TAB 3: Cachet, Signature & Logo */}
+            {/* TAB 3: Cachet & Signature */}
             <TabsContent value="visuals" className="space-y-5 pt-4">
               <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-2xl p-5 md:p-6 shadow-xs space-y-6">
                 <div className="border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
-                    <FileCheck2 className="w-4 h-4 text-emerald-600" />
-                    Visuels Officiels & Fichiers Multimédia (Supabase Storage)
-                  </h3>
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    Téléversez vos fichiers : ils sont automatiquement stockés dans votre espace cloud dédié et intégrés à vos documents.
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                      Standard Tunisien
+                    </span>
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                      <FileCheck2 className="w-4 h-4 text-emerald-600" />
+                      Cachet & Signature Officiels (Supabase Cloud)
+                    </h3>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    En pratique tunisienne, appliquez votre cachet sur papier blanc, apposez votre signature au stylo dessus, puis scannez ou photographiez le résultat.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <MediaUploader
-                    label="Cachet Officiel de l'Entreprise"
-                    folder="stamps"
-                    value={formData.stampUrl}
-                    onChange={(url) => setFormData({ ...formData, stampUrl: url })}
-                    hint="Format PNG transparent recommandé (max 5 MB)"
-                  />
-                  <MediaUploader
-                    label="Signature Numérique du Gérant"
-                    folder="signatures"
-                    value={formData.signatureUrl}
-                    onChange={(url) => setFormData({ ...formData, signatureUrl: url })}
-                    hint="Signature manuscrite scannée sur fond transparent"
-                  />
+                {/* Primary Recommended Uploader */}
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/50">
+                    <MediaUploader
+                      label="Cachet & Signature Officiel (Recommandé)"
+                      folder="stamps"
+                      value={formData.stampUrl}
+                      onChange={(url) => setFormData({ ...formData, stampUrl: url })}
+                      hint="Fichier unique contenant votre cachet physique signé (PNG transparent conseillé, max 5 MB)"
+                    />
+                  </div>
+
+                  {/* Optional Separate Signature Toggle */}
+                  <div className="pt-2">
+                    <div
+                      onClick={() => setHasSeparateSignature(!hasSeparateSignature)}
+                      className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={hasSeparateSignature || Boolean(formData.signatureUrl)}
+                        onChange={(e) => setHasSeparateSignature(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span>J&apos;ai une signature manuscrite séparée du cachet (Optionnel)</span>
+                    </div>
+
+                    {(hasSeparateSignature || formData.signatureUrl) && (
+                      <div className="mt-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/30 animate-in fade-in duration-200">
+                        <MediaUploader
+                          label="Signature Manuscrite Séparée"
+                          folder="signatures"
+                          value={formData.signatureUrl}
+                          onChange={(url) => setFormData({ ...formData, signatureUrl: url })}
+                          hint="Sera automatiquement superposée à votre cachet avec orientation naturelle"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
@@ -553,7 +583,7 @@ export default function OrganizationSettingsPage() {
                       <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                       Rendu officiel sur facture PDF & Impression
                     </span>
-                    <span className="text-[10px] font-mono text-zinc-400">Position : Bas de page droite</span>
+                    <span className="text-[10px] font-mono text-zinc-400">Bas de facture droite</span>
                   </div>
 
                   <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -569,34 +599,32 @@ export default function OrganizationSettingsPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3 p-2 rounded-lg bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:8px_8px] border border-dashed border-zinc-300 dark:border-zinc-700">
-                      {formData.stampUrl ? (
-                        <div className="flex flex-col items-center gap-1">
+                    <div className="p-3 rounded-xl bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:8px_8px] border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center min-w-[140px] min-h-[75px]">
+                      {formData.stampUrl && formData.signatureUrl ? (
+                        <div className="relative inline-block">
                           <img
                             src={formData.stampUrl}
                             alt="Cachet"
-                            className="h-16 w-auto object-contain filter drop-shadow-xs"
+                            className="h-16 w-auto object-contain filter drop-shadow-xs opacity-95"
                           />
-                          <span className="text-[9px] font-bold text-zinc-400 uppercase">Cachet</span>
-                        </div>
-                      ) : (
-                        <div className="h-16 w-20 border border-dashed border-zinc-300 dark:border-zinc-700 rounded flex items-center justify-center text-[10px] text-zinc-400 font-medium text-center">
-                          Pas de cachet
-                        </div>
-                      )}
-
-                      {formData.signatureUrl ? (
-                        <div className="flex flex-col items-center gap-1">
                           <img
                             src={formData.signatureUrl}
                             alt="Signature"
+                            className="absolute inset-0 h-14 w-auto object-contain -rotate-6 translate-x-2 translate-y-1 mix-blend-multiply"
+                          />
+                        </div>
+                      ) : formData.stampUrl || formData.signatureUrl ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <img
+                            src={formData.stampUrl || formData.signatureUrl || ''}
+                            alt="Cachet & Signature"
                             className="h-16 w-auto object-contain filter drop-shadow-xs"
                           />
-                          <span className="text-[9px] font-bold text-zinc-400 uppercase">Signature</span>
+                          <span className="text-[9px] font-bold text-zinc-400 uppercase">Cachet & Signature</span>
                         </div>
                       ) : (
-                        <div className="h-16 w-20 border border-dashed border-zinc-300 dark:border-zinc-700 rounded flex items-center justify-center text-[10px] text-zinc-400 font-medium text-center">
-                          Pas de signature
+                        <div className="h-14 w-28 border border-dashed border-zinc-300 dark:border-zinc-700 rounded flex items-center justify-center text-[10px] text-zinc-400 font-medium text-center">
+                          Pas de cachet
                         </div>
                       )}
                     </div>
@@ -679,28 +707,29 @@ export default function OrganizationSettingsPage() {
                 <span className="text-[10px] text-zinc-400 uppercase font-semibold block mb-2">
                   Cachet & Signature apposés :
                 </span>
-                <div className="flex items-center justify-end gap-3 h-16">
-                  {formData.stampUrl ? (
-                    <img
-                      src={formData.stampUrl}
-                      alt="Cachet"
-                      className="h-14 w-auto object-contain border border-zinc-200 dark:border-zinc-700 rounded p-1 bg-white"
-                    />
-                  ) : (
-                    <div className="h-14 w-20 border border-dashed border-zinc-300 dark:border-zinc-700 rounded flex items-center justify-center text-[9px] text-zinc-400 text-center px-1">
-                      Cachet
+                <div className="flex items-center justify-end h-16">
+                  {formData.stampUrl && formData.signatureUrl ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={formData.stampUrl}
+                        alt="Cachet"
+                        className="h-14 w-auto object-contain filter drop-shadow-xs opacity-95"
+                      />
+                      <img
+                        src={formData.signatureUrl}
+                        alt="Signature"
+                        className="absolute inset-0 h-12 w-auto object-contain -rotate-6 translate-x-2 translate-y-1 mix-blend-multiply"
+                      />
                     </div>
-                  )}
-
-                  {formData.signatureUrl ? (
+                  ) : formData.stampUrl || formData.signatureUrl ? (
                     <img
-                      src={formData.signatureUrl}
-                      alt="Signature"
-                      className="h-14 w-auto object-contain border border-zinc-200 dark:border-zinc-700 rounded p-1 bg-white"
+                      src={formData.stampUrl || formData.signatureUrl || ''}
+                      alt="Cachet & Signature"
+                      className="h-14 w-auto object-contain filter drop-shadow-xs"
                     />
                   ) : (
-                    <div className="h-14 w-20 border border-dashed border-zinc-300 dark:border-zinc-700 rounded flex items-center justify-center text-[9px] text-zinc-400 text-center px-1">
-                      Signature
+                    <div className="h-14 w-28 border border-dashed border-zinc-300 dark:border-zinc-700 rounded flex items-center justify-center text-[9px] text-zinc-400 text-center px-1">
+                      Cachet & Signature
                     </div>
                   )}
                 </div>
