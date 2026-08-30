@@ -447,25 +447,8 @@ export default function InvoiceDetailPage({
 
         {/* Financial Recap & Stamps */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 border-t border-zinc-200 pt-6">
-          {/* Bank details & Terms */}
-          <div className="md:col-span-7 space-y-4">
-            {invoice.organization?.bankRib && (
-              <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200">
-                <div className="flex items-center gap-2 text-xs font-bold text-zinc-900 mb-1">
-                  <CreditCard className="w-4 h-4 text-emerald-600" />
-                  Règlement par Virement Bancaire
-                </div>
-                <div className="text-xs text-zinc-600 space-y-0.5 font-mono">
-                  <p>
-                    Banque : <strong>{invoice.organization.bankName || 'Banque Tunisienne'}</strong>
-                  </p>
-                  <p>
-                    RIB : <strong className="text-zinc-950">{invoice.organization.bankRib}</strong>
-                  </p>
-                </div>
-              </div>
-            )}
-
+          {/* Terms & Notes */}
+          <div className="md:col-span-7 space-y-3">
             {invoice.paymentTerms && (
               <div className="text-xs text-zinc-600">
                 <strong>Conditions de paiement :</strong> {invoice.paymentTerms}
