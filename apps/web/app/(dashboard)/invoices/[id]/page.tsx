@@ -515,14 +515,6 @@ export default function InvoiceDetailPage({
               <strong>Montant en lettres :</strong>{' '}
               <span className="italic">{numberToTunisianDinars(invoice.total)} ({invoice.total.toFixed(3)} {invoice.currency}).</span>
             </div>
-
-            {/* Fiscal Exemption Note */}
-            {!invoice.vatApplicable && (
-              <div className="pt-1 text-[10px] text-zinc-500 space-y-0.5">
-                <p className="font-semibold text-zinc-700">TVA non applicable — Régime auto-entrepreneur (contribution forfaitaire).</p>
-                <p>Régime auto-entrepreneur : dispense de droit de timbre fiscal et de retenue à la source.</p>
-              </div>
-            )}
           </div>
         </div>
 
