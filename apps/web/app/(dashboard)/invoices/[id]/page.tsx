@@ -32,6 +32,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { invoiceService, type Invoice } from '@/features/invoices/services/invoice-service'
 import { paymentService } from '@/features/payments/services/payment-service'
+import { numberToTunisianDinars } from '@/lib/number-to-words'
 
 export default function InvoiceDetailPage({
   params,
@@ -503,11 +504,25 @@ export default function InvoiceDetailPage({
               </div>
             )}
             <div className="flex justify-between py-3 border-t-2 border-zinc-900 text-sm font-bold text-zinc-950">
-              <span>TOTAL NET TTC :</span>
+              <span>TOTAL FACTURE (HT = TTC) :</span>
               <span className="font-mono text-base text-emerald-700">
                 {invoice.total.toFixed(3)} {invoice.currency}
               </span>
             </div>
+
+            {/* Montant en toutes lettres */}
+            <div className="pt-2 text-[11px] text-zinc-700 bg-zinc-50 p-2.5 rounded border border-zinc-200">
+              <strong>Montant en lettres :</strong>{' '}
+              <span className="italic">{numberToTunisianDinars(invoice.total)} ({invoice.total.toFixed(3)} {invoice.currency}).</span>
+            </div>
+
+            {/* Fiscal Exemption Note */}
+            {!invoice.vatApplicable && (
+              <div className="pt-1 text-[10px] text-zinc-500 space-y-0.5">
+                <p className="font-semibold text-zinc-700">TVA non applicable — Régime auto-entrepreneur (contribution forfaitaire).</p>
+                <p>Régime auto-entrepreneur : dispense de droit de timbre fiscal et de retenue à la source.</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -527,8 +542,9 @@ export default function InvoiceDetailPage({
                 className="max-h-20 max-w-[160px] mx-auto object-contain"
               />
             ) : (
-              <div className="h-16 flex items-center justify-center text-[11px] text-zinc-400 font-mono">
-                [Signature Numérique]
+              <div className="h-16 flex flex-col items-center justify-center text-[11px] text-zinc-700 font-serif">
+                <div className="font-bold">{invoice.organization?.name || 'Mohamed Khalil Bchir'}</div>
+                <div className="text-[10px] text-zinc-400 font-mono">[Signature & Cachet]</div>
               </div>
             )}
           </div>
