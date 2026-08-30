@@ -54,6 +54,10 @@ export const useUserStore = create<UserState>((set, get) => ({
       const { data } = await client.get<{ data: BackendUserProfile }>(USER_ROUTES.me)
       set({ user: data.data, loading: false, error: null })
     } catch (err) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        set({ user: null, loading: false, error: null })
+        return
+      }
       const message =
         err instanceof ApiError ? err.message : 'Failed to load profile. Please try again.'
       set({ error: message, loading: false })

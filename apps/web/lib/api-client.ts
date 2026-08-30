@@ -51,6 +51,17 @@ function normalizeError(err: unknown): ApiError {
   return new ApiError(err instanceof Error ? err.message : 'Request failed', 0, undefined)
 }
 
+function isAuthRoute(url?: string): boolean {
+  if (!url) return false
+  return (
+    url.includes('/authentication/login') ||
+    url.includes('/authentication/register') ||
+    url.includes('/authentication/refresh') ||
+    url.includes('/authentication/forgot-password') ||
+    url.includes('/authentication/reset-password')
+  )
+}
+
 /**
  * Creates an axios instance with Bearer token auth:
  * - Request interceptor: adds Authorization Bearer when getToken() returns a value
@@ -85,7 +96,7 @@ export function createApiClient(config: CreateApiClientConfig): AxiosInstance {
     async (err) => {
       const originalRequest = err.config
       const config = originalRequest as RequestConfigWithRetry
-      if (err.response?.status === 401 && config && !config._retry) {
+      if (err.response?.status === 401 && config && !config._retry && !isAuthRoute(config.url)) {
         if (!isRefreshing) {
           isRefreshing = true
           config._retry = true
@@ -140,7 +151,8 @@ export function createCookieAuthApiClient(config: CreateCookieAuthApiClientConfi
     async (err) => {
       const originalRequest = err.config
       const config = originalRequest as RequestConfigWithRetry
-      if (err.response?.status === 401 && config && !config._retry) {
+      const isAuthEndpoint = isAuthRoute(config.url) || config.url === refreshUrl
+      if (err.response?.status === 401 && config && !config._retry && !isAuthEndpoint) {
         if (!isRefreshing) {
           isRefreshing = true
           config._retry = true
