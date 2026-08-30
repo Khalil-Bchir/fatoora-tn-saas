@@ -18,9 +18,16 @@ import {
   Building2,
   CreditCard,
   Download,
+  MoreHorizontal,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Dialog,
   DialogContent,
@@ -213,7 +220,7 @@ export default function InvoiceDetailPage({
                 </span>
               )}
               {invoice.status === 'SENT' && (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                   <Send className="w-3.5 h-3.5" /> Envoyée
                 </span>
               )}
@@ -225,12 +232,12 @@ export default function InvoiceDetailPage({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           {invoice.status === 'DRAFT' && (
             <Button
               onClick={handleSend}
               disabled={actionLoading}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 shadow-sm rounded-xl"
+              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 px-3.5 shadow-xs rounded-xl font-medium cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               Émettre & Partager
@@ -242,46 +249,55 @@ export default function InvoiceDetailPage({
               variant="outline"
               size="sm"
               onClick={() => setShowShareModal(true)}
-              className="gap-1.5 text-xs h-9 rounded-xl border-zinc-200 dark:border-zinc-800"
+              className="gap-1.5 text-xs h-9 px-3 rounded-xl border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800"
             >
-              <Copy className="w-3.5 h-3.5 text-emerald-600" />
+              <Copy className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               Lien Public
             </Button>
           )}
 
           <Button
-            variant="default"
+            variant="outline"
             size="sm"
             onClick={handlePrint}
-            className="gap-1.5 text-xs h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+            className="gap-1.5 text-xs h-9 px-3 rounded-xl border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             Imprimer / PDF
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDuplicate}
-            disabled={actionLoading}
-            className="gap-1.5 text-xs h-9 rounded-xl border-zinc-200 dark:border-zinc-800"
-          >
-            <Files className="w-3.5 h-3.5" />
-            Dupliquer
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 text-xs rounded-xl">
+              <DropdownMenuItem
+                onClick={handleDuplicate}
+                disabled={actionLoading}
+                className="gap-2 cursor-pointer text-xs"
+              >
+                <Files className="w-3.5 h-3.5 text-zinc-500" />
+                Dupliquer la facture
+              </DropdownMenuItem>
 
-          {invoice.status !== 'CANCELLED' && invoice.status !== 'PAID' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCancel}
-              disabled={actionLoading}
-              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 h-9 rounded-xl"
-            >
-              <Ban className="w-3.5 h-3.5 mr-1" />
-              Annuler
-            </Button>
-          )}
+              {invoice.status !== 'CANCELLED' && invoice.status !== 'PAID' && (
+                <DropdownMenuItem
+                  onClick={handleCancel}
+                  disabled={actionLoading}
+                  className="gap-2 text-xs text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer"
+                >
+                  <Ban className="w-3.5 h-3.5" />
+                  Annuler la facture
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
