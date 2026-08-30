@@ -28,17 +28,10 @@ import {
   type ExtractedData,
   type ExtractedItem,
 } from '@/features/chat/services/chat-service'
-import { clientService, type Client } from '@/features/clients/services/client-service'
 import {
   organizationService,
   type Organization,
 } from '@/features/organization/services/organization-service'
-
-const STARTER_SHORTCUTS = [
-  'Facture pour Acme, 10 heures de dév à 50 TND/h, due dans 15 jours',
-  'Facturer 1 450 DT à SARL Carthage Tech pour refonte site web',
-  'فاتورة لشركة الزيتونة 850 دينار صيانة برمجيات',
-]
 
 function formatChatMessageContent(content: string) {
   const lines = content.split('\n')
@@ -84,22 +77,19 @@ export default function InvoiceChatPage() {
   const [inputValue, setInputValue] = useState('')
   const [loading, setLoading] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
-  const [recentClients, setRecentClients] = useState<Client[]>([])
   const [directEditing, setDirectEditing] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const initSession = async () => {
     try {
       setLoading(true)
-      const [created, clientsList, orgData] = await Promise.all([
+      const [created, orgData] = await Promise.all([
         chatService.createSession(),
-        clientService.listClients().catch(() => []),
         organizationService.getOrganization().catch(() => null),
       ])
       setSession(created)
       setMessages(created.messages)
       setExtracted(created.extractedData || null)
-      setRecentClients(clientsList)
       if (orgData) setOrg(orgData)
     } catch (err) {
       console.error('Failed to create chat session', err)
@@ -237,36 +227,6 @@ export default function InvoiceChatPage() {
           <RotateCcw className="w-3.5 h-3.5" />
           Réinitialiser
         </Button>
-      </div>
-
-      {/* Repeat Shortcuts & Quick Chips */}
-      <div className="bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-xl p-3">
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex items-center gap-2 pb-2.5">
-            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-emerald-600" /> Raccourcis :
-            </span>
-            {recentClients.slice(0, 2).map((c) => (
-              <button
-                key={c.id}
-                onClick={() => handleSendMessage(`Reconduire la dernière facture pour ${c.companyName || c.name}`)}
-                className="text-[11px] px-3 py-1.5 rounded-full bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-emerald-500 hover:text-emerald-600 border border-zinc-200 dark:border-zinc-700 transition-all shrink-0 font-medium shadow-xs"
-              >
-                Même facture pour <strong>{c.companyName || c.name}</strong>
-              </button>
-            ))}
-            {STARTER_SHORTCUTS.map((sug, i) => (
-              <button
-                key={i}
-                onClick={() => handleSendMessage(sug)}
-                className="text-[11px] px-3 py-1.5 rounded-full bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600 border border-zinc-200 dark:border-zinc-700 transition-all shrink-0 whitespace-nowrap shadow-xs"
-              >
-                {sug}
-              </button>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" className="h-2" />
-        </ScrollArea>
       </div>
 
       {/* Main Dual-Pane Grid */}
