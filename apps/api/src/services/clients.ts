@@ -25,11 +25,16 @@ export class ClientsService {
     });
   }
 
-  async getClient(orgId: string, clientId: string): Promise<Client | null> {
+  async getClient(orgId: string, clientId: string): Promise<any | null> {
     return this.prisma.client.findFirst({
       where: {
         id: clientId,
         organizationId: orgId,
+      },
+      include: {
+        invoices: {
+          orderBy: { createdAt: 'desc' },
+        },
       },
     });
   }

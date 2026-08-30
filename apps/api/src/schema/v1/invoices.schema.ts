@@ -187,6 +187,84 @@ export const createInvoiceRoute = createRoute({
   },
 });
 
+export const sendInvoiceRoute = createRoute({
+  method: 'post',
+  path: '/{id}/send',
+  tags: ['Invoices'],
+  summary: 'Mark invoice as sent and generate sharing options',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      description: 'Invoice marked as sent',
+      content: {
+        'application/json': { schema: z.object({ data: invoiceSchema }) },
+      },
+    },
+    404: {
+      description: 'Invoice not found',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    500: {
+      description: 'Server error',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});
+
+export const cancelInvoiceRoute = createRoute({
+  method: 'post',
+  path: '/{id}/cancel',
+  tags: ['Invoices'],
+  summary: 'Cancel an invoice',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    200: {
+      description: 'Invoice cancelled',
+      content: {
+        'application/json': { schema: z.object({ data: invoiceSchema }) },
+      },
+    },
+    404: {
+      description: 'Invoice not found',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    500: {
+      description: 'Server error',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});
+
+export const duplicateInvoiceRoute = createRoute({
+  method: 'post',
+  path: '/{id}/duplicate',
+  tags: ['Invoices'],
+  summary: 'Duplicate an invoice as a new draft with next sequential number',
+  request: {
+    params: z.object({ id: z.string() }),
+  },
+  responses: {
+    201: {
+      description: 'Invoice duplicated',
+      content: {
+        'application/json': { schema: z.object({ data: invoiceSchema }) },
+      },
+    },
+    404: {
+      description: 'Original invoice not found',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+    500: {
+      description: 'Server error',
+      content: { 'application/json': { schema: errorResponseSchema } },
+    },
+  },
+});
+
 export const updateInvoiceStatusRoute = createRoute({
   method: 'patch',
   path: '/{id}/status',

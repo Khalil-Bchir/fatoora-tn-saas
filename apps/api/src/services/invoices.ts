@@ -1,31 +1,36 @@
-import type { PrismaClient, Invoice, InvoiceStatus, Organization } from '@repo/database';
-import type { CreateInvoiceRequest } from '@repo/types';
-import crypto from 'node:crypto';
+import { prisma } from '@repo/database';
+import type { PrismaClient } from '@repo/database';
+import type { CreateInvoiceRequest, InvoiceStatus } from '@repo/types';
+import crypto from 'crypto';
 
 export class InvoicesService {
   private prisma: PrismaClient;
+  private organizationId?: string;
 
-  constructor({ prisma }: { prisma: PrismaClient }) {
-    this.prisma = prisma;
+  constructor(organizationId?: string, prismaClient?: PrismaClient) {
+    this.prisma = prismaClient || prisma;
+    this.organizationId = organizationId;
   }
 
   async listInvoices(orgId: string, status?: InvoiceStatus, clientId?: string, limit = 50) {
     return this.prisma.invoice.findMany({
       where: {
         organizationId: orgId,
-        ...(status && { status }),
-        ...(clientId && { clientId }),
+        ...(status ? { status } : {}),
+        ...(clientId ? { clientId } : {}),
       },
       include: {
         client: true,
         items: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: {
+        createdAt: 'desc',
+      },
       take: limit,
     });
   }
 
-  async getInvoice(orgId: string, invoiceId: string) {
+  async getInvoiceById(orgId: string, invoiceId: string) {
     return this.prisma.invoice.findFirst({
       where: {
         id: invoiceId,
@@ -35,47 +40,40 @@ export class InvoicesService {
         client: true,
         items: true,
         organization: true,
-        paymentProofs: {
-          orderBy: { submittedAt: 'desc' },
-        },
+        paymentProofs: true,
       },
     });
   }
 
-  async getInvoiceByPublicToken(publicToken: string) {
-    return this.prisma.invoice.findUnique({
-      where: {
-        publicToken,
-      },
-      include: {
-        client: true,
-        items: true,
-        organization: true,
-        paymentProofs: {
-          orderBy: { submittedAt: 'desc' },
-        },
-      },
-    });
-  }
+  async createInvoice(data: CreateInvoiceRequest, organizationId?: string) {
+    const orgId = organizationId || this.organizationId;
+    if (!orgId) {
+      throw new Error('Organization ID is required to create an invoice');
+    }
 
-  async createInvoice(orgId: string, data: CreateInvoiceRequest, org: Organization) {
-    // 1. Calculate line item totals and subtotal
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+    });
+
+    if (!org) {
+      throw new Error('Organization not found');
+    }
+
+    const vatApplicable = data.vatApplicable ?? org.vatRegistered;
+    const defaultVatRate = data.vatRate ?? org.defaultVatRate ?? 19.0;
+    const timbreFiscalAmount = vatApplicable ? data.timbreFiscalAmount ?? 1.0 : 0;
+
     let subtotal = 0;
     let totalVatAmount = 0;
 
-    const vatApplicable =
-      data.vatApplicable !== undefined ? data.vatApplicable : org.vatRegistered;
-    const defaultVatRate =
-      data.vatRate !== undefined ? data.vatRate : (org.defaultVatRate ?? 19.0);
-
     const calculatedItems = data.items.map((item) => {
-      const itemVatRate = vatApplicable ? (item.vatRate ?? defaultVatRate) : 0;
       const itemSubtotal = item.quantity * item.unitPrice;
-      const itemVat = (itemSubtotal * itemVatRate) / 100;
-      const itemTotal = itemSubtotal + itemVat;
+      const itemVatRate = vatApplicable ? item.vatRate ?? defaultVatRate : 0;
+      const itemVatAmount = (itemSubtotal * itemVatRate) / 100;
+      const itemTotal = itemSubtotal + itemVatAmount;
 
       subtotal += itemSubtotal;
-      totalVatAmount += itemVat;
+      totalVatAmount += itemVatAmount;
 
       return {
         description: item.description,
@@ -86,17 +84,15 @@ export class InvoicesService {
       };
     });
 
-    const timbreFiscalAmount = vatApplicable
-      ? (data.timbreFiscalAmount !== undefined ? data.timbreFiscalAmount : 1.0)
-      : 0.0;
-
     const total = subtotal + totalVatAmount + timbreFiscalAmount;
 
-    // 2. Atomically increment organization invoice counter and generate invoice number
+    // Increment per-organization sequential invoice counter
     const updatedOrg = await this.prisma.organization.update({
       where: { id: orgId },
       data: {
-        invoiceCounter: { increment: 1 },
+        invoiceCounter: {
+          increment: 1,
+        },
       },
     });
 
@@ -105,10 +101,9 @@ export class InvoicesService {
     const invoicePrefix = updatedOrg.invoicePrefix || 'FAC';
     const invoiceNumber = `${invoicePrefix}-${year}-${sequenceNumber}`;
 
-    // 3. Cryptographically secure random token for public link
+    // Cryptographically secure random token for public link
     const publicToken = crypto.randomBytes(24).toString('hex');
 
-    // 4. Generate markdown invoice content
     const client = await this.prisma.client.findFirst({
       where: { id: data.clientId, organizationId: orgId },
     });
@@ -135,7 +130,6 @@ export class InvoicesService {
       paymentTerms: data.paymentTerms || updatedOrg.defaultPaymentTerms,
     });
 
-    // 5. Create invoice in DB
     return this.prisma.invoice.create({
       data: {
         organizationId: orgId,
@@ -164,6 +158,64 @@ export class InvoicesService {
         items: true,
       },
     });
+  }
+
+  async sendInvoice(orgId: string, invoiceId: string) {
+    const existing = await this.prisma.invoice.findFirst({
+      where: { id: invoiceId, organizationId: orgId },
+    });
+    if (!existing) {
+      throw new Error('Invoice not found');
+    }
+    return this.prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { status: 'SENT' },
+      include: { client: true, items: true },
+    });
+  }
+
+  async cancelInvoice(orgId: string, invoiceId: string) {
+    const existing = await this.prisma.invoice.findFirst({
+      where: { id: invoiceId, organizationId: orgId },
+    });
+    if (!existing) {
+      throw new Error('Invoice not found');
+    }
+    return this.prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { status: 'CANCELLED' },
+      include: { client: true, items: true },
+    });
+  }
+
+  async duplicateInvoice(orgId: string, invoiceId: string) {
+    const original = await this.getInvoiceById(orgId, invoiceId);
+    if (!original) {
+      throw new Error('Original invoice not found');
+    }
+
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+
+    return this.createInvoice(
+      {
+        clientId: original.clientId,
+        currency: original.currency,
+        vatApplicable: original.vatApplicable,
+        vatRate: original.vatRate,
+        timbreFiscalAmount: original.timbreFiscalAmount,
+        dueDate: (dueDate.toISOString().split('T')[0] as string),
+        notes: original.notes || undefined,
+        paymentTerms: original.paymentTerms || undefined,
+        items: original.items.map((it) => ({
+          description: it.description,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          vatRate: it.vatRate,
+        })),
+      },
+      orgId
+    );
   }
 
   async updateInvoiceStatus(orgId: string, invoiceId: string, status: InvoiceStatus) {
@@ -198,11 +250,62 @@ export class InvoicesService {
       where: { id: invoiceId },
     });
 
-    return true;
+    return { success: true };
+  }
+
+  async getPublicInvoiceByToken(token: string) {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { publicToken: token },
+      include: {
+        client: true,
+        items: true,
+        organization: true,
+        paymentProofs: true,
+      },
+    });
+
+    if (!invoice) {
+      throw new Error('Invoice not found with provided token');
+    }
+
+    return invoice;
+  }
+
+  async submitPublicPaymentProof(
+    token: string,
+    data: { fileUrl: string; amount?: number; notes?: string }
+  ) {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { publicToken: token },
+    });
+
+    if (!invoice) {
+      throw new Error('Invoice not found with provided token');
+    }
+
+    const proof = await this.prisma.paymentProof.create({
+      data: {
+        invoiceId: invoice.id,
+        organizationId: invoice.organizationId,
+        fileUrl: data.fileUrl,
+        amount: data.amount || invoice.total,
+        notes: data.notes || null,
+        status: 'SUBMITTED',
+      },
+    });
+
+    await this.prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: 'PAYMENT_CLAIMED',
+      },
+    });
+
+    return proof;
   }
 
   private generateInvoiceMarkdown(params: {
-    org: Organization;
+    org: any;
     client: any;
     invoiceNumber: string;
     issueDate: Date;
@@ -214,61 +317,78 @@ export class InvoicesService {
     vatAmount: number;
     timbreFiscalAmount: number;
     total: number;
-    items: Array<{ description: string; quantity: number; unitPrice: number; total: number }>;
+    items: Array<any>;
     notes?: string | null;
     paymentTerms?: string | null;
   }): string {
-    const lines = [
-      `# FACTURE : ${params.invoiceNumber}`,
-      `\n**Date d'émission** : ${params.issueDate.toISOString().split('T')[0]}`,
-      `**Date d'échéance** : ${params.dueDate.toISOString().split('T')[0]}`,
-      `\n---`,
-      `\n### Émetteur :`,
-      `**${params.org.name}**`,
-      params.org.activityType ? `*${params.org.activityType}*` : '',
-      params.org.taxId ? `Matricule Fiscal / Identifiant : ${params.org.taxId}` : '',
-      params.org.address ? `Adresse : ${params.org.address}, ${params.org.city || ''}` : '',
-      params.org.phone ? `Tél : ${params.org.phone}` : '',
-      params.org.bankRib ? `RIB Bancaire : ${params.org.bankRib} (${params.org.bankName || 'Banque'})` : '',
-      `\n### Client :`,
-      `**${params.client.companyName ? `${params.client.companyName} (${params.client.name})` : params.client.name}**`,
-      params.client.taxId ? `Matricule Fiscal Client : ${params.client.taxId}` : '',
-      params.client.address ? `Adresse : ${params.client.address}` : '',
-      params.client.email ? `Email : ${params.client.email}` : '',
-      `\n---`,
-      `\n### Détail des prestations :`,
-      `| Description | Quantité | Prix Unitaire (${params.currency}) | Total (${params.currency}) |`,
-      `| :--- | :---: | :---: | :---: |`,
-    ];
+    const {
+      org,
+      client,
+      invoiceNumber,
+      issueDate,
+      dueDate,
+      currency,
+      vatApplicable,
+      vatRate,
+      subtotal,
+      vatAmount,
+      timbreFiscalAmount,
+      total,
+      items,
+      notes,
+      paymentTerms,
+    } = params;
 
-    params.items.forEach((item) => {
-      lines.push(
-        `| ${item.description} | ${item.quantity} | ${item.unitPrice.toFixed(3)} | ${item.total.toFixed(3)} |`
-      );
+    let md = `# FACTURE ${invoiceNumber}\n\n`;
+    md += `**Date d'émission** : ${issueDate.toLocaleDateString('fr-TN')}\n`;
+    md += `**Date d'échéance** : ${dueDate.toLocaleDateString('fr-TN')}\n\n`;
+    md += `---\n\n`;
+    md += `### ÉMETTEUR\n`;
+    md += `**${org.name}**\n`;
+    if (org.activityType) md += `*${org.activityType}*\n`;
+    if (org.taxId) md += `Matricule Fiscal : \`${org.taxId}\`\n`;
+    if (org.address) md += `Adresse : ${org.address}, ${org.city || ''}\n`;
+    if (org.phone) md += `Tél : ${org.phone}\n`;
+    if (org.email) md += `Email : ${org.email}\n`;
+    if (org.bankRib) md += `RIB : \`${org.bankRib}\` (${org.bankName || 'Banque'})\n\n`;
+
+    md += `### DESTINATAIRE (CLIENT)\n`;
+    md += `**${client.name}**\n`;
+    if (client.companyName) md += `Entreprise : ${client.companyName}\n`;
+    if (client.taxId) md += `Matricule Fiscal : \`${client.taxId}\`\n`;
+    if (client.address) md += `Adresse : ${client.address}, ${client.city || ''}\n\n`;
+
+    md += `---\n\n`;
+    md += `### DÉTAIL DES PRESTATIONS\n\n`;
+    md += `| Description | Qté | Prix Unitaire (${currency}) | TVA (%) | Total (${currency}) |\n`;
+    md += `| :--- | :---: | :---: | :---: | :---: |\n`;
+
+    items.forEach((item) => {
+      md += `| ${item.description} | ${item.quantity} | ${item.unitPrice.toFixed(3)} | ${item.vatRate}% | ${item.total.toFixed(3)} |\n`;
     });
 
-    lines.push(`\n---`);
-    lines.push(`\n### Récapitulatif :`);
-    lines.push(`- **Total Hors Taxe (HT)** : ${params.subtotal.toFixed(3)} ${params.currency}`);
-
-    if (params.vatApplicable) {
-      lines.push(`- **TVA (${params.vatRate}%)** : ${params.vatAmount.toFixed(3)} ${params.currency}`);
-      if (params.timbreFiscalAmount > 0) {
-        lines.push(`- **Droit de Timbre Fiscal** : ${params.timbreFiscalAmount.toFixed(3)} ${params.currency}`);
+    md += `\n`;
+    md += `### RÉCAPITULATIF FINANCIER\n\n`;
+    md += `- **Total Hors Taxe (HT)** : ${subtotal.toFixed(3)} ${currency}\n`;
+    if (vatApplicable) {
+      md += `- **Total TVA (${vatRate}%)** : ${vatAmount.toFixed(3)} ${currency}\n`;
+      if (timbreFiscalAmount > 0) {
+        md += `- **Droit de Timbre Fiscal** : ${timbreFiscalAmount.toFixed(3)} ${currency}\n`;
       }
-      lines.push(`- **TOTAL TTC À PAYER** : **${params.total.toFixed(3)} ${params.currency}**`);
+      md += `- **TOTAL TOUTES TAXES COMPRISES (TTC)** : **${total.toFixed(3)} ${currency}**\n\n`;
     } else {
-      lines.push(`- *TVA non applicable (Régime fiscal : ${params.org.taxRegime})*`);
-      lines.push(`- **TOTAL NET À PAYER** : **${params.total.toFixed(3)} ${params.currency}**`);
+      md += `*TVA non applicable (Régime : ${org.taxRegime || 'Auto-Entrepreneur'})*\n`;
+      md += `- **NET À PAYER** : **${total.toFixed(3)} ${currency}**\n\n`;
     }
 
-    if (params.paymentTerms) {
-      lines.push(`\n**Modalités de paiement** : ${params.paymentTerms}`);
-    }
-    if (params.notes) {
-      lines.push(`\n**Notes** : ${params.notes}`);
+    if (paymentTerms) {
+      md += `**Modalités de règlement** : ${paymentTerms}\n\n`;
     }
 
-    return lines.filter(Boolean).join('\n');
+    if (notes) {
+      md += `**Notes** : ${notes}\n\n`;
+    }
+
+    return md;
   }
 }

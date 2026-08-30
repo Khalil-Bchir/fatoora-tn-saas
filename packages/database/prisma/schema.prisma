@@ -179,17 +179,18 @@ model InvoiceItem {
 }
 
 model PaymentProof {
-  id             String             @id @default(uuid())
-  organizationId String
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invoiceId      String
-  invoice        Invoice            @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  fileUrl        String
-  amount         Float?
-  notes          String?
-  status         PaymentProofStatus @default(SUBMITTED)
-  submittedAt    DateTime           @default(now())
-  reviewedAt     DateTime?
+  id              String             @id @default(uuid())
+  organizationId  String
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoiceId       String
+  invoice         Invoice            @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  fileUrl         String
+  amount          Float?
+  notes           String?
+  rejectionReason String?
+  status          PaymentProofStatus @default(SUBMITTED)
+  submittedAt     DateTime           @default(now())
+  reviewedAt      DateTime?
 
   @@index([organizationId])
   @@index([invoiceId])
@@ -197,17 +198,18 @@ model PaymentProof {
 }
 
 model ChatSession {
-  id             String       @id @default(uuid())
+  id             String        @id @default(uuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title          String       @default("New Invoice Discussion")
-  messages       Json         @default("[]")
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String        @default("New Invoice Discussion")
+  messages       Json          @default("[]")
   draftInvoice   Json?
-  status         String       @default("active")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  status         String        @default("active")
+  invoiceId      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([organizationId])
   @@index([userId])

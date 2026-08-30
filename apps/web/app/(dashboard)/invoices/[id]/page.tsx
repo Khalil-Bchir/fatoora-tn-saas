@@ -1,426 +1,610 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useInvoicesStore } from '@/store/invoices-store';
+import { useEffect, useState, use } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   ArrowLeft,
-  Share2,
-  Download,
+  Send,
+  Copy,
   Printer,
+  FileCheck2,
+  AlertTriangle,
   CheckCircle2,
   Clock,
-  AlertCircle,
   Building2,
-  FileCheck,
-  Copy,
   ExternalLink,
+  ShieldCheck,
+  CreditCard,
   Trash2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+  Ban,
+  Files,
+  XCircle,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { toast } from 'sonner';
-import type { InvoiceStatus } from '@repo/types';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { invoiceService, type Invoice } from '@/features/invoices/services/invoice-service'
+import { paymentService } from '@/features/payments/services/payment-service'
 
-export default function InvoiceDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const invoiceId = params.id as string;
-  const { getInvoice, updateStatus, deleteInvoice, currentInvoice, loading } = useInvoicesStore();
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+export default function InvoiceDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const resolvedParams = use(params)
+  const id = resolvedParams.id
+  const router = useRouter()
 
-  useEffect(() => {
-    if (invoiceId) {
-      getInvoice(invoiceId).catch((err) => {
-        toast.error(err.message || 'Facture introuvable');
-      });
+  const [invoice, setInvoice] = useState<Invoice | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+
+  // Payment proof rejection modal
+  const [rejectProofId, setRejectProofId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+
+  const loadInvoice = async () => {
+    try {
+      setLoading(true)
+      const data = await invoiceService.getInvoice(id)
+      setInvoice(data)
+    } catch (err) {
+      console.error('Failed to load invoice', err)
+    } finally {
+      setLoading(false)
     }
-  }, [invoiceId, getInvoice]);
-
-  if (loading || !currentInvoice) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <p className="text-muted-foreground animate-pulse">Chargement de la facture...</p>
-      </div>
-    );
   }
 
-  const invoice = currentInvoice;
-  const org = invoice.organization;
-  const client = invoice.client;
+  useEffect(() => {
+    loadInvoice()
+  }, [id])
 
-  const publicUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/i/${invoice.publicToken}`
-    : `/i/${invoice.publicToken}`;
-
-  const copyShareLink = () => {
-    navigator.clipboard.writeText(publicUrl);
-    toast.success('Lien public copié dans le presse-papiers !');
-  };
-
-  const handleStatusChange = async (newStatus: InvoiceStatus) => {
-    setUpdatingStatus(true);
+  const handleSend = async () => {
     try {
-      await updateStatus(invoice.id, newStatus);
-      toast.success('Statut mis à jour avec succès');
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la mise à jour');
+      setActionLoading(true)
+      await invoiceService.sendInvoice(id)
+      await loadInvoice()
+      setShowShareModal(true)
+    } catch (err) {
+      console.error('Failed to send invoice', err)
     } finally {
-      setUpdatingStatus(false);
+      setActionLoading(false)
     }
-  };
+  }
 
-  const handleDelete = async () => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette facture ?')) return;
+  const handleDuplicate = async () => {
     try {
-      await deleteInvoice(invoice.id);
-      toast.success('Facture supprimée');
-      router.push('/invoices');
-    } catch (err: any) {
-      toast.error(err.message || 'Erreur lors de la suppression');
+      setActionLoading(true)
+      const dup = await invoiceService.duplicateInvoice(id)
+      router.push(`/invoices/${dup.id}`)
+    } catch (err) {
+      console.error('Failed to duplicate invoice', err)
+    } finally {
+      setActionLoading(false)
     }
-  };
+  }
 
-  const handleDownloadMarkdown = () => {
-    if (!invoice.mdContent) return;
-    const blob = new Blob([invoice.mdContent], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${invoice.invoiceNumber}.md`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success('Facture Markdown téléchargée');
-  };
+  const handleCancel = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir annuler cette facture ?')) return
+    try {
+      setActionLoading(true)
+      await invoiceService.cancelInvoice(id)
+      await loadInvoice()
+    } catch (err) {
+      console.error('Failed to cancel invoice', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleConfirmProof = async (proofId: string) => {
+    try {
+      setActionLoading(true)
+      await paymentService.confirmProof(proofId)
+      await loadInvoice()
+    } catch (err) {
+      console.error('Failed to confirm proof', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleRejectProof = async () => {
+    if (!rejectProofId || !rejectReason.trim()) return
+    try {
+      setActionLoading(true)
+      await paymentService.rejectProof(rejectProofId, rejectReason)
+      setRejectProofId(null)
+      setRejectReason('')
+      await loadInvoice()
+    } catch (err) {
+      console.error('Failed to reject proof', err)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const publicUrl =
+    typeof window !== 'undefined' && invoice?.publicToken
+      ? `${window.location.origin}/i/${invoice.publicToken}`
+      : ''
+
+  const copyPublicLink = () => {
+    if (publicUrl) {
+      navigator.clipboard.writeText(publicUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-28">
+        <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-xs text-zinc-500">Chargement de la facture...</p>
+      </div>
+    )
+  }
+
+  if (!invoice) {
+    return (
+      <div className="max-w-2xl mx-auto p-8 text-center">
+        <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Facture introuvable</h2>
+        <Link href="/invoices" className="text-xs text-emerald-600 underline mt-2 block">
+          Retour aux factures
+        </Link>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-5xl mx-auto w-full">
-      {/* Top action bar */}
+    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
+      {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/invoices">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold font-mono text-primary">{invoice.invoiceNumber}</h1>
-              <Badge variant="outline">{invoice.status}</Badge>
+              <h1 className="text-xl font-mono font-bold text-zinc-900 dark:text-white">
+                {invoice.invoiceNumber}
+              </h1>
+              {invoice.status === 'PAID' && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Payée
+                </span>
+              )}
+              {invoice.status === 'PAYMENT_CLAIMED' && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Preuve de virement déposée
+                </span>
+              )}
+              {invoice.status === 'DRAFT' && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  Brouillon
+                </span>
+              )}
+              {invoice.status === 'SENT' && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/40 flex items-center gap-1">
+                  <Send className="w-3.5 h-3.5" /> Envoyée
+                </span>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Émise le {new Date(invoice.issueDate).toLocaleDateString('fr-TN')} · Échéance le{' '}
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Émise le {new Date(invoice.issueDate).toLocaleDateString('fr-TN')} • Échéance le{' '}
               {new Date(invoice.dueDate).toLocaleDateString('fr-TN')}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <Button size="sm" variant="outline" onClick={copyShareLink} className="gap-1.5 text-xs">
-            <Copy className="w-3.5 h-3.5" /> Copier Lien Public
-          </Button>
-          <Link href={`/i/${invoice.publicToken}`} target="_blank">
-            <Button size="sm" variant="outline" className="gap-1.5 text-xs">
-              <ExternalLink className="w-3.5 h-3.5" /> Vue Client
+        <div className="flex flex-wrap items-center gap-2">
+          {invoice.status === 'DRAFT' && (
+            <Button
+              onClick={handleSend}
+              disabled={actionLoading}
+              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 shadow-sm"
+            >
+              <Send className="w-3.5 h-3.5" />
+              Émettre & Partager
             </Button>
-          </Link>
-          <Button size="sm" variant="outline" onClick={() => window.print()} className="gap-1.5 text-xs">
-            <Printer className="w-3.5 h-3.5" /> Imprimer / PDF
+          )}
+
+          {invoice.publicToken && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowShareModal(true)}
+              className="gap-1.5 text-xs h-9"
+            >
+              <Copy className="w-3.5 h-3.5 text-emerald-600" />
+              Lien Public
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="gap-1.5 text-xs h-9"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            Imprimer / PDF
           </Button>
-          <Button size="sm" variant="outline" onClick={handleDownloadMarkdown} className="gap-1.5 text-xs">
-            <Download className="w-3.5 h-3.5" /> Markdown
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDuplicate}
+            disabled={actionLoading}
+            className="gap-1.5 text-xs h-9"
+          >
+            <Files className="w-3.5 h-3.5" />
+            Dupliquer
           </Button>
+
+          {invoice.status !== 'CANCELLED' && invoice.status !== 'PAID' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCancel}
+              disabled={actionLoading}
+              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 h-9"
+            >
+              <Ban className="w-3.5 h-3.5 mr-1" />
+              Annuler
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Invoice Preview Document (Left 2 cols) */}
-        <div className="lg:col-span-2">
-          <Card className="border shadow-md bg-card print:border-none print:shadow-none p-8 space-y-8">
-            {/* Header / Org Info */}
-            <div className="flex justify-between items-start border-b pb-6">
-              <div>
-                {org?.logoUrl ? (
-                  <img src={org.logoUrl} alt={org.name} className="h-12 w-auto object-contain mb-3" />
-                ) : (
-                  <h2 className="text-2xl font-black text-foreground tracking-tight mb-1">
-                    {org?.name || 'Mon Entreprise'}
-                  </h2>
-                )}
-                {org?.activityType && (
-                  <p className="text-xs text-muted-foreground italic mb-1">{org.activityType}</p>
-                )}
-                {org?.taxId && (
-                  <p className="text-xs text-muted-foreground font-mono">
-                    Matricule Fiscal : <strong>{org.taxId}</strong>
-                  </p>
-                )}
-                {org?.address && (
-                  <p className="text-xs text-muted-foreground">
-                    {org.address}, {org.city}
-                  </p>
-                )}
-                {org?.phone && (
-                  <p className="text-xs text-muted-foreground">Tél : {org.phone}</p>
-                )}
-              </div>
-
-              <div className="text-right">
-                <div className="inline-block bg-primary/10 border border-primary/20 rounded-lg px-3 py-1 text-primary font-mono font-bold text-sm mb-2">
-                  FACTURE
+      {/* Payment Proofs Review Queue Banner if any pending */}
+      {invoice.paymentProofs && invoice.paymentProofs.length > 0 && (
+        <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl p-5 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-sm">
+            <ShieldCheck className="w-5 h-5 text-amber-600" />
+            Preuve de paiement soumise par le client
+          </div>
+          <div className="space-y-3">
+            {invoice.paymentProofs.map((proof) => (
+              <div
+                key={proof.id}
+                className="bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-zinc-800 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-zinc-900 dark:text-white">
+                    <span>Reçu de virement :</span>
+                    <a
+                      href={proof.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-emerald-600 underline flex items-center gap-1"
+                    >
+                      Consulter le justificatif <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <div className="text-xs text-zinc-500 mt-1">
+                    Déposé le {new Date(proof.submittedAt).toLocaleDateString('fr-TN')} • Montant
+                    déclaré :{' '}
+                    <span className="font-semibold text-zinc-900 dark:text-white">
+                      {(proof.amount ?? invoice.total).toFixed(3)} {invoice.currency}
+                    </span>
+                  </div>
+                  {proof.notes && (
+                    <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 italic">
+                      Note client : "{proof.notes}"
+                    </div>
+                  )}
+                  {proof.status === 'CONFIRMED' && (
+                    <span className="inline-block mt-2 text-[11px] font-semibold text-emerald-600">
+                      ✓ Paiement validé
+                    </span>
+                  )}
+                  {proof.status === 'REJECTED' && (
+                    <span className="inline-block mt-2 text-[11px] font-semibold text-red-600">
+                      ✗ Refusé : {proof.rejectionReason}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xl font-bold font-mono">{invoice.invoiceNumber}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Date : {new Date(invoice.issueDate).toLocaleDateString('fr-TN')}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Échéance : {new Date(invoice.dueDate).toLocaleDateString('fr-TN')}
-                </p>
-              </div>
-            </div>
 
-            {/* Client Details */}
-            <div className="p-4 rounded-lg bg-muted/20 border text-sm">
-              <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">
-                Facturé À :
+                {proof.status === 'SUBMITTED' && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleConfirmProof(proof.id)}
+                      disabled={actionLoading}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 gap-1.5"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Confirmer le paiement
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRejectProofId(proof.id)}
+                      disabled={actionLoading}
+                      className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 h-8 gap-1.5"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      Rejeter
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Official Tunisian Invoice Document Preview */}
+      <div
+        id="invoice-document"
+        className="bg-white text-zinc-900 border border-zinc-200 rounded-xl p-8 md:p-12 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0"
+      >
+        {/* Document Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-zinc-200 pb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-zinc-950">
+              {invoice.organization?.name || 'Mon Entreprise'}
+            </h2>
+            <div className="mt-2 text-xs text-zinc-600 space-y-1">
+              {invoice.organization?.taxId && (
+                <p>
+                  <strong className="text-zinc-900">Matricule Fiscal :</strong>{' '}
+                  <span className="font-mono">{invoice.organization.taxId}</span>
+                </p>
+              )}
+              {invoice.organization?.address && <p>{invoice.organization.address}</p>}
+              {invoice.organization?.phone && <p>Tél : {invoice.organization.phone}</p>}
+              {invoice.organization?.email && <p>Email : {invoice.organization.email}</p>}
+            </div>
+          </div>
+
+          <div className="text-right">
+            <div className="inline-block px-3 py-1 bg-zinc-100 rounded text-xs font-semibold uppercase tracking-wider text-zinc-800">
+              FACTURE OFFICIELLE
+            </div>
+            <h3 className="text-xl font-mono font-bold text-emerald-700 mt-2">
+              {invoice.invoiceNumber}
+            </h3>
+            <div className="mt-2 text-xs text-zinc-500 space-y-1">
+              <p>
+                <strong>Date d'émission :</strong>{' '}
+                {new Date(invoice.issueDate).toLocaleDateString('fr-TN')}
               </p>
-              <p className="font-bold text-foreground">{client?.name}</p>
-              {client?.companyName && (
-                <p className="text-xs font-semibold text-muted-foreground">{client.companyName}</p>
-              )}
-              {client?.taxId && (
-                <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                  Matricule Fiscal Client : <strong>{client.taxId}</strong>
-                </p>
-              )}
-              {client?.address && (
-                <p className="text-xs text-muted-foreground">{client.address}</p>
-              )}
-              {client?.email && (
-                <p className="text-xs text-muted-foreground">{client.email}</p>
-              )}
+              <p>
+                <strong>Date d'échéance :</strong>{' '}
+                {new Date(invoice.dueDate).toLocaleDateString('fr-TN')}
+              </p>
             </div>
-
-            {/* Items Table */}
-            <div>
-              <table className="w-full text-left text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40 text-xs font-bold">
-                    <th className="py-2.5 px-3">Description</th>
-                    <th className="py-2.5 px-3 text-center">Qté</th>
-                    <th className="py-2.5 px-3 text-right">Prix Unitaire</th>
-                    {invoice.vatApplicable && (
-                      <th className="py-2.5 px-3 text-center">TVA</th>
-                    )}
-                    <th className="py-2.5 px-3 text-right">Total ({invoice.currency})</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40">
-                  {invoice.items.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="py-3 px-3">{item.description}</td>
-                      <td className="py-3 px-3 text-center font-mono">{item.quantity}</td>
-                      <td className="py-3 px-3 text-right font-mono">{item.unitPrice.toFixed(3)}</td>
-                      {invoice.vatApplicable && (
-                        <td className="py-3 px-3 text-center font-mono">{item.vatRate}%</td>
-                      )}
-                      <td className="py-3 px-3 text-right font-mono font-medium">
-                        {item.total.toFixed(3)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Financial Summary */}
-            <div className="flex justify-end pt-4 border-t">
-              <div className="w-72 space-y-2 text-sm">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Total HT :</span>
-                  <span className="font-mono">{invoice.subtotal.toFixed(3)} {invoice.currency}</span>
-                </div>
-
-                {invoice.vatApplicable ? (
-                  <>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Total TVA ({invoice.vatRate}%) :</span>
-                      <span className="font-mono">{invoice.vatAmount.toFixed(3)} {invoice.currency}</span>
-                    </div>
-                    {invoice.timbreFiscalAmount > 0 && (
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>Timbre Fiscal :</span>
-                        <span className="font-mono">{invoice.timbreFiscalAmount.toFixed(3)} {invoice.currency}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-bold text-base border-t pt-2 text-foreground">
-                      <span>TOTAL TTC :</span>
-                      <span className="font-mono text-primary text-lg">
-                        {invoice.total.toFixed(3)} {invoice.currency}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[11px] text-muted-foreground italic">
-                      TVA non applicable (Régime : {org?.taxRegime || 'Auto-entrepreneur'})
-                    </p>
-                    <div className="flex justify-between font-bold text-base border-t pt-2 text-foreground">
-                      <span>NET À PAYER :</span>
-                      <span className="font-mono text-primary text-lg">
-                        {invoice.total.toFixed(3)} {invoice.currency}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Payment Coordinates & Stamp/Signature Preview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-6 text-xs">
-              <div>
-                <p className="font-bold text-primary mb-1">Coordonnées de Règlement :</p>
-                {org?.bankRib && (
-                  <p className="font-mono">
-                    <strong>RIB :</strong> {org.bankRib}
-                  </p>
-                )}
-                {org?.bankName && <p><strong>Banque :</strong> {org.bankName}</p>}
-                {invoice.paymentTerms && (
-                  <p className="mt-2 text-muted-foreground">{invoice.paymentTerms}</p>
-                )}
-                {invoice.notes && (
-                  <p className="mt-2 text-muted-foreground italic">{invoice.notes}</p>
-                )}
-              </div>
-
-              <div className="flex flex-col items-center sm:items-end justify-center">
-                <p className="font-bold text-muted-foreground mb-2">Cachet et Signature :</p>
-                <div className="flex items-center gap-3">
-                  {org?.stampImageUrl && (
-                    <img
-                      src={org.stampImageUrl}
-                      alt="Cachet"
-                      className="h-20 w-auto object-contain border rounded p-1 bg-white"
-                    />
-                  )}
-                  {org?.signatureImageUrl && (
-                    <img
-                      src={org.signatureImageUrl}
-                      alt="Signature"
-                      className="h-20 w-auto object-contain border rounded p-1 bg-white"
-                    />
-                  )}
-                  {!org?.stampImageUrl && !org?.signatureImageUrl && (
-                    <div className="h-20 w-36 border-2 border-dashed rounded flex items-center justify-center text-[10px] text-muted-foreground text-center p-2">
-                      Cachet / Signature non configuré
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </Card>
+          </div>
         </div>
 
-        {/* Sidebar Management Actions (Right col) */}
-        <div className="space-y-6">
-          {/* Status Management */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Gestion du Statut</CardTitle>
-              <CardDescription className="text-xs">
-                Mise à jour manuelle du cycle de règlement
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Select
-                value={invoice.status}
-                onValueChange={(val) => handleStatusChange(val as InvoiceStatus)}
-                disabled={updatingStatus}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="DRAFT">Brouillon (DRAFT)</SelectItem>
-                  <SelectItem value="SENT">Envoyée (SENT)</SelectItem>
-                  <SelectItem value="AWAITING_PAYMENT">En attente (AWAITING_PAYMENT)</SelectItem>
-                  <SelectItem value="PAYMENT_CLAIMED">Preuve reçue (PAYMENT_CLAIMED)</SelectItem>
-                  <SelectItem value="PAID">Payée & Confirmée (PAID)</SelectItem>
-                  <SelectItem value="OVERDUE">En retard (OVERDUE)</SelectItem>
-                  <SelectItem value="CANCELLED">Annulée (CANCELLED)</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+        {/* Client Destinataire */}
+        <div className="bg-zinc-50 border border-zinc-200/80 rounded-lg p-5">
+          <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block mb-1">
+            Facturé à (Client)
+          </span>
+          <h4 className="text-base font-bold text-zinc-900">
+            {invoice.client?.companyName || invoice.client?.name}
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-zinc-600 mt-2">
+            {invoice.client?.taxId && (
+              <p>
+                <strong>Matricule Fiscal :</strong>{' '}
+                <span className="font-mono">{invoice.client.taxId}</span>
+              </p>
+            )}
+            {invoice.client?.email && <p>Email : {invoice.client.email}</p>}
+            {invoice.client?.phone && <p>Tél : {invoice.client.phone}</p>}
+            {invoice.client?.address && <p>Adresse : {invoice.client.address}</p>}
+          </div>
+        </div>
 
-          {/* Payment Proofs received */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-primary" />
-                Preuves de Paiement
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!invoice.paymentProofs || invoice.paymentProofs.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Aucun justificatif de virement soumis par le client pour le moment.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {invoice.paymentProofs.map((proof) => (
-                    <div key={proof.id} className="p-3 border rounded-lg bg-card text-xs space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold">Justificatif</span>
-                        <Badge variant="outline">{proof.status}</Badge>
-                      </div>
-                      <p className="text-muted-foreground text-[11px]">
-                        Reçu le {new Date(proof.submittedAt).toLocaleString('fr-TN')}
-                      </p>
-                      {proof.notes && <p className="italic">{proof.notes}</p>}
-                      <a
-                        href={proof.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-primary hover:underline block pt-1 font-medium"
-                      >
-                        Consulter la pièce jointe
-                      </a>
-                    </div>
-                  ))}
+        {/* Prestations Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b-2 border-zinc-900 text-[11px] uppercase tracking-wider text-zinc-700 font-bold">
+                <th className="py-3 px-2">Désignation des Prestations / Articles</th>
+                <th className="py-3 px-2 text-center">Qté</th>
+                <th className="py-3 px-2 text-right">Prix Unit. HT</th>
+                {invoice.vatApplicable && <th className="py-3 px-2 text-center">TVA</th>}
+                <th className="py-3 px-2 text-right">Total HT</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200">
+              {invoice.items.map((item, idx) => (
+                <tr key={idx}>
+                  <td className="py-3.5 px-2 font-medium text-zinc-900">{item.description}</td>
+                  <td className="py-3.5 px-2 text-center text-zinc-600">{item.quantity}</td>
+                  <td className="py-3.5 px-2 text-right font-mono text-zinc-700">
+                    {item.unitPrice.toFixed(3)} {invoice.currency}
+                  </td>
+                  {invoice.vatApplicable && (
+                    <td className="py-3.5 px-2 text-center text-zinc-600">{item.vatRate}%</td>
+                  )}
+                  <td className="py-3.5 px-2 text-right font-mono font-semibold text-zinc-900">
+                    {(item.quantity * item.unitPrice).toFixed(3)} {invoice.currency}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Financial Recap & Stamps */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 border-t border-zinc-200 pt-6">
+          {/* Bank details & Terms */}
+          <div className="md:col-span-7 space-y-4">
+            {invoice.organization?.bankRib && (
+              <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200">
+                <div className="flex items-center gap-2 text-xs font-bold text-zinc-900 mb-1">
+                  <CreditCard className="w-4 h-4 text-emerald-600" />
+                  Règlement par Virement Bancaire
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="text-xs text-zinc-600 space-y-0.5 font-mono">
+                  <p>
+                    Banque : <strong>{invoice.organization.bankName || 'Banque Tunisienne'}</strong>
+                  </p>
+                  <p>
+                    RIB : <strong className="text-zinc-950">{invoice.organization.bankRib}</strong>
+                  </p>
+                </div>
+              </div>
+            )}
 
-          {/* Danger Zone */}
-          <Card className="border-destructive/30 bg-destructive/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm text-destructive font-semibold">Zone de Danger</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full text-xs gap-1.5"
-                onClick={handleDelete}
-              >
-                <Trash2 className="w-3.5 h-3.5" /> Supprimer la facture
-              </Button>
-            </CardContent>
-          </Card>
+            {invoice.paymentTerms && (
+              <div className="text-xs text-zinc-600">
+                <strong>Conditions de paiement :</strong> {invoice.paymentTerms}
+              </div>
+            )}
+
+            {invoice.notes && (
+              <div className="text-xs text-zinc-500 italic">
+                <strong>Notes :</strong> {invoice.notes}
+              </div>
+            )}
+          </div>
+
+          {/* Totals Table */}
+          <div className="md:col-span-5 space-y-2 text-xs">
+            <div className="flex justify-between py-1.5 border-b border-zinc-100 text-zinc-600">
+              <span>Total Brut Hors Taxe (HT) :</span>
+              <span className="font-mono font-medium">
+                {invoice.subtotal.toFixed(3)} {invoice.currency}
+              </span>
+            </div>
+            {invoice.vatApplicable && (
+              <div className="flex justify-between py-1.5 border-b border-zinc-100 text-zinc-600">
+                <span>Total TVA :</span>
+                <span className="font-mono font-medium">
+                  {invoice.vatAmount.toFixed(3)} {invoice.currency}
+                </span>
+              </div>
+            )}
+            {invoice.vatApplicable && invoice.timbreFiscalAmount > 0 && (
+              <div className="flex justify-between py-1.5 border-b border-zinc-100 text-zinc-600">
+                <span>Droit de Timbre Fiscal :</span>
+                <span className="font-mono font-medium">
+                  {invoice.timbreFiscalAmount.toFixed(3)} {invoice.currency}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between py-3 border-t-2 border-zinc-900 text-sm font-bold text-zinc-950">
+              <span>TOTAL NET TTC :</span>
+              <span className="font-mono text-base text-emerald-700">
+                {invoice.total.toFixed(3)} {invoice.currency}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Cachet & Signature */}
+        <div className="border-t border-zinc-200 pt-6 flex justify-between items-end">
+          <div className="text-[10px] text-zinc-400">
+            Document généré électroniquement via Fatoora Hub Tunisie.
+          </div>
+          <div className="text-center p-4 border border-dashed border-zinc-300 rounded-lg min-w-[200px]">
+            <span className="text-[10px] uppercase font-semibold text-zinc-400 block mb-2">
+              Cachet & Signature
+            </span>
+            {invoice.organization?.stampUrl ? (
+              <img
+                src={invoice.organization.stampUrl}
+                alt="Cachet"
+                className="max-h-20 max-w-[160px] mx-auto object-contain"
+              />
+            ) : (
+              <div className="h-16 flex items-center justify-center text-[11px] text-zinc-400 font-mono">
+                [Signature Numérique]
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Share Modal Dialog */}
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-emerald-600" />
+              Lien Public Sécurisé
+            </DialogTitle>
+            <DialogDescription>
+              Transmettez ce lien à votre client pour qu'il consulte sa facture et dépose son reçu
+              de virement.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center gap-2">
+              <Input readOnly value={publicUrl} className="text-xs font-mono" />
+              <Button onClick={copyPublicLink} size="sm" className="bg-emerald-600 text-white shrink-0">
+                {copied ? 'Copié !' : 'Copier'}
+              </Button>
+            </div>
+            <div className="p-3 bg-zinc-50 dark:bg-zinc-800/60 rounded-lg text-xs text-zinc-500 space-y-1">
+              <p className="font-semibold text-zinc-800 dark:text-zinc-200">
+                Ce que voit votre client :
+              </p>
+              <p>✓ Votre facture officielle avec Matricule Fiscal & RIB</p>
+              <p>✓ Bouton de téléchargement PDF</p>
+              <p>✓ Formulaire pour téléverser la preuve de paiement</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Payment Proof Dialog */}
+      <Dialog open={!!rejectProofId} onOpenChange={(open) => !open && setRejectProofId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Refuser le justificatif
+            </DialogTitle>
+            <DialogDescription>
+              Précisez le motif du refus. Cette mention sera visible par le client sur son lien de
+              facture.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Input
+                placeholder="ex: Montant viré incomplet, virement non reçu sur le compte..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setRejectProofId(null)}>
+                Annuler
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleRejectProof}
+                disabled={!rejectReason.trim() || actionLoading}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Confirmer le refus
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
 }

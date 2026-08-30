@@ -14,10 +14,10 @@ const handler = new OpenAPIHono<Env>();
 handler.openapi(getPublicInvoiceRoute, async (c) => {
   const prisma = c.get('prisma');
   const { token } = c.req.valid('param');
-  const service = new InvoicesService({ prisma });
+  const service = new InvoicesService(undefined, prisma);
 
   try {
-    const invoice = await service.getInvoiceByPublicToken(token);
+    const invoice = await service.getPublicInvoiceByToken(token);
     if (!invoice) {
       return c.json(
         {
@@ -48,10 +48,10 @@ handler.openapi(submitPublicPaymentProofRoute, async (c) => {
   const prisma = c.get('prisma');
   const { token } = c.req.valid('param');
   const body = c.req.valid('json');
-  const service = new InvoicesService({ prisma });
+  const service = new InvoicesService(undefined, prisma);
 
   try {
-    const invoice = await service.getInvoiceByPublicToken(token);
+    const invoice = await service.getPublicInvoiceByToken(token);
     if (!invoice) {
       return c.json(
         {

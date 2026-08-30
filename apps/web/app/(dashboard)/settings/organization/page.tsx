@@ -1,430 +1,303 @@
-'use client';
+'use client'
 
-import React, { useEffect, useState } from 'react';
-import { useOrganizationStore } from '@/store/organization-store';
+import { useState, useEffect } from 'react'
 import {
   Building2,
   Save,
   CreditCard,
-  Stamp,
   FileCheck2,
-  AlertTriangle,
-  Image as ImageIcon,
   CheckCircle2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+  ShieldCheck,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
-import type { TaxRegime } from '@repo/types';
+  organizationService,
+  type Organization,
+} from '@/features/organization/services/organization-service'
 
 export default function OrganizationSettingsPage() {
-  const { organization, loading, fetchOrganization, updateOrganization } =
-    useOrganizationStore();
-
-  const [name, setName] = useState('');
-  const [activityType, setActivityType] = useState('');
-  const [taxRegime, setTaxRegime] = useState<TaxRegime>('AUTO_ENTREPRENEUR');
-  const [vatRegistered, setVatRegistered] = useState(false);
-  const [taxId, setTaxId] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [website, setWebsite] = useState('');
-  const [bankName, setBankName] = useState('');
-  const [bankRib, setBankRib] = useState('');
-  const [bankIban, setBankIban] = useState('');
-  const [stampImageUrl, setStampImageUrl] = useState('');
-  const [signatureImageUrl, setSignatureImageUrl] = useState('');
-  const [logoUrl, setLogoUrl] = useState('');
-  const [invoicePrefix, setInvoicePrefix] = useState('FAC');
-  const [defaultVatRate, setDefaultVatRate] = useState(19);
-  const [defaultPaymentTerms, setDefaultPaymentTerms] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    fetchOrganization();
-  }, [fetchOrganization]);
+  const [formData, setFormData] = useState<Partial<Organization>>({
+    name: '',
+    activityType: '',
+    taxRegime: 'Régime Réel',
+    taxId: '',
+    vatRegistered: true,
+    defaultVatRate: 19,
+    timbreFiscalAmount: 1.0,
+    address: '',
+    city: 'Tunis',
+    country: 'Tunisie',
+    phone: '',
+    email: '',
+    bankName: 'BIAT',
+    bankRib: '',
+    stampUrl: '',
+    signatureUrl: '',
+    invoicePrefix: 'FAC',
+    defaultPaymentTerms: 'Paiement par virement bancaire sous 30 jours dès réception.',
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [savedSuccess, setSavedSuccess] = useState(false)
 
   useEffect(() => {
-    if (organization) {
-      setName(organization.name || '');
-      setActivityType(organization.activityType || '');
-      setTaxRegime(organization.taxRegime || 'AUTO_ENTREPRENEUR');
-      setVatRegistered(organization.vatRegistered || false);
-      setTaxId(organization.taxId || '');
-      setAddress(organization.address || '');
-      setCity(organization.city || '');
-      setPostalCode(organization.postalCode || '');
-      setPhone(organization.phone || '');
-      setEmail(organization.email || '');
-      setWebsite(organization.website || '');
-      setBankName(organization.bankName || '');
-      setBankRib(organization.bankRib || '');
-      setBankIban(organization.bankIban || '');
-      setStampImageUrl(organization.stampImageUrl || '');
-      setSignatureImageUrl(organization.signatureImageUrl || '');
-      setLogoUrl(organization.logoUrl || '');
-      setInvoicePrefix(organization.invoicePrefix || 'FAC');
-      setDefaultVatRate(organization.defaultVatRate || 19);
-      setDefaultPaymentTerms(organization.defaultPaymentTerms || '');
+    const load = async () => {
+      try {
+        setLoading(true)
+        const org = await organizationService.getOrganization()
+        if (org) {
+          setFormData((prev) => ({
+            ...prev,
+            ...org,
+          }))
+        }
+      } catch (err) {
+        console.error('Failed to load organization settings', err)
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [organization]);
+    load()
+  }, [])
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     try {
-      await updateOrganization({
-        name,
-        activityType: activityType || undefined,
-        taxRegime,
-        vatRegistered,
-        taxId: taxId || undefined,
-        address: address || undefined,
-        city: city || undefined,
-        postalCode: postalCode || undefined,
-        phone: phone || undefined,
-        email: email || undefined,
-        website: website || undefined,
-        bankName: bankName || undefined,
-        bankRib: bankRib || undefined,
-        bankIban: bankIban || undefined,
-        stampImageUrl: stampImageUrl || undefined,
-        signatureImageUrl: signatureImageUrl || undefined,
-        logoUrl: logoUrl || undefined,
-        invoicePrefix: invoicePrefix || 'FAC',
-        defaultVatRate: Number(defaultVatRate),
-        defaultPaymentTerms: defaultPaymentTerms || undefined,
-      });
-      toast.success('Paramètres de votre entreprise enregistrés avec succès !');
-    } catch (err: any) {
-      toast.error(err.message || "Erreur lors de l'enregistrement");
+      setSaving(true)
+      await organizationService.updateOrganization(formData)
+      setSavedSuccess(true)
+      setTimeout(() => setSavedSuccess(false), 3000)
+    } catch (err) {
+      console.error('Failed to save settings', err)
     } finally {
-      setIsSaving(false);
+      setSaving(false)
     }
-  };
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-xs text-zinc-500">Chargement des paramètres...</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-5xl mx-auto w-full">
+    <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Paramètres de l'Entreprise</h1>
-        <p className="text-muted-foreground">
-          Configurez votre profil fiscal tunisien, cachet, signature et coordonnées bancaires
+        <h1 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2.5">
+          <Building2 className="w-6 h-6 text-emerald-600" />
+          Profil Entreprise & Fiscalité
+        </h1>
+        <p className="text-xs text-zinc-500 mt-1">
+          Gérez vos mentions obligatoires, coordonnées bancaires (RIB) et visuels officiels.
         </p>
       </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
-        {/* Fiscal Regime & Identifiers */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-primary" />
-              Identité & Régime Fiscal Tunisien
-            </CardTitle>
-            <CardDescription>
-              Informations légales requises sur vos factures
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">Raison Sociale / Nom Commercial *</Label>
-                <Input
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="ex. DevConsulting Tunisie"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Type d'activité</Label>
-                <Input
-                  value={activityType}
-                  onChange={(e) => setActivityType(e.target.value)}
-                  placeholder="ex. Services Informatiques & Digital"
-                  className="mt-1"
-                />
-              </div>
-            </div>
+      {savedSuccess && (
+        <div className="p-3.5 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 text-xs border border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          Paramètres de l'entreprise mis à jour avec succès !
+        </div>
+      )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">Régime Fiscal</Label>
-                <Select
-                  value={taxRegime}
-                  onValueChange={(val) => {
-                    setTaxRegime(val as TaxRegime);
-                    if (val === 'AUTO_ENTREPRENEUR') {
-                      setVatRegistered(false);
-                    } else if (val === 'REEL') {
-                      setVatRegistered(true);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AUTO_ENTREPRENEUR">
-                      Auto-entrepreneur (Exonéré TVA, plafond 75k DT)
-                    </SelectItem>
-                    <SelectItem value="FORFAITAIRE">
-                      Régime Forfaitaire
-                    </SelectItem>
-                    <SelectItem value="REEL">
-                      Régime Réel (Assujetti TVA obligatoire)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Section 1: Identité & Fiscalité */}
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white border-b border-zinc-100 dark:border-zinc-800 pb-3">
+            1. Identité Fiscale & Commerciale
+          </h3>
 
-              <div>
-                <Label className="text-xs">Matricule Fiscal / Identifiant Unique</Label>
-                <Input
-                  value={taxId}
-                  onChange={(e) => setTaxId(e.target.value)}
-                  placeholder="ex. 1234567/A/M/000 ou ID Auto-entrepreneur"
-                  className="mt-1 font-mono"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
-              <div>
-                <Label className="text-xs font-semibold">Assujettissement à la TVA</Label>
-                <p className="text-[11px] text-muted-foreground">
-                  Active le calcul automatique de la TVA (0%, 7%, 13%, 19%) sur vos factures
-                </p>
-              </div>
-              <Switch checked={vatRegistered} onCheckedChange={setVatRegistered} />
-            </div>
-
-            {vatRegistered && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <p>
-                  <strong>Information de conformité :</strong> Pour les entreprises assujetties à la TVA, l'obligation e-invoicing (El Fatoora / TTN) est en cours de préparation dans notre roadmap (Phase 3). Vos factures mentionneront toutes les mentions légales tunisiennes en attendant l'intégration directe.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Coordonnées & Adresse */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Coordonnées de l'Entreprise</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <Label className="text-xs">Téléphone</Label>
-                <Input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+216 ..."
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Email Professionnel</Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="contact@entreprise.tn"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Site Web</Label>
-                <Input
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="https://..."
-                  className="mt-1"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="sm:col-span-2">
-                <Label className="text-xs">Adresse physique</Label>
-                <Input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="ex. Rue Alain Savary, Immeuble Horizon"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Ville / Gouvernorat</Label>
-                <Input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="ex. Tunis, Sousse, Sfax..."
-                  className="mt-1"
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Coordonnées Bancaires */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-primary" />
-              Coordonnées Bancaires (Paiement)
-            </CardTitle>
-            <CardDescription>
-              Ces coordonnées seront affichées sur les factures remises à vos clients
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs">Banque</Label>
-                <Input
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  placeholder="ex. BIAT, Attijari, STB, Amen Bank..."
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">RIB Bancaire Tunisien (20 chiffres)</Label>
-                <Input
-                  value={bankRib}
-                  onChange={(e) => setBankRib(e.target.value)}
-                  placeholder="08 000 0000000000000 00"
-                  className="mt-1 font-mono"
-                />
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs">Conditions et modalités de règlement par défaut</Label>
+              <Label className="text-xs">Raison Sociale / Nom Commercial *</Label>
               <Input
-                value={defaultPaymentTerms}
-                onChange={(e) => setDefaultPaymentTerms(e.target.value)}
-                placeholder="ex. Règlement par virement bancaire sous 30 jours à réception"
-                className="mt-1"
+                value={formData.name || ''}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="h-9 text-xs mt-1"
+                required
               />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Cachet, Signature et Logo */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Stamp className="w-5 h-5 text-primary" />
-              Cachet, Signature & Logo
-            </CardTitle>
-            <CardDescription>
-              Images apposées automatiquement sur vos factures et exports PDF
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <Label className="text-xs">URL du Logo de l'entreprise</Label>
-                <Input
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://.../logo.png"
-                  className="mt-1 text-xs"
-                />
-                {logoUrl && (
-                  <div className="mt-2 p-2 border rounded bg-white flex justify-center">
-                    <img src={logoUrl} alt="Logo" className="h-12 w-auto object-contain" />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <Label className="text-xs">URL de l'image du Cachet (Tampon)</Label>
-                <Input
-                  value={stampImageUrl}
-                  onChange={(e) => setStampImageUrl(e.target.value)}
-                  placeholder="https://.../cachet.png"
-                  className="mt-1 text-xs"
-                />
-                {stampImageUrl && (
-                  <div className="mt-2 p-2 border rounded bg-white flex justify-center">
-                    <img src={stampImageUrl} alt="Cachet" className="h-16 w-auto object-contain" />
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <Label className="text-xs">URL de l'image de Signature</Label>
-                <Input
-                  value={signatureImageUrl}
-                  onChange={(e) => setSignatureImageUrl(e.target.value)}
-                  placeholder="https://.../signature.png"
-                  className="mt-1 text-xs"
-                />
-                {signatureImageUrl && (
-                  <div className="mt-2 p-2 border rounded bg-white flex justify-center">
-                    <img src={signatureImageUrl} alt="Signature" className="h-16 w-auto object-contain" />
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Invoice Prefix & Numbering */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Numérotation des Factures</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs">Préfixe de facturation</Label>
+              <Label className="text-xs">Matricule Fiscal (MF) *</Label>
               <Input
-                value={invoicePrefix}
-                onChange={(e) => setInvoicePrefix(e.target.value)}
-                placeholder="ex. FAC ou INV"
-                className="mt-1 font-mono"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Format généré : {invoicePrefix}-2026-0001, {invoicePrefix}-2026-0002...
-              </p>
-            </div>
-            <div>
-              <Label className="text-xs">Compteur actuel de factures émises</Label>
-              <Input
-                disabled
-                value={organization?.invoiceCounter || 0}
-                className="mt-1 font-mono bg-muted"
+                value={formData.taxId || ''}
+                onChange={(e) => setFormData({ ...formData, taxId: e.target.value })}
+                className="h-9 text-xs mt-1 font-mono"
+                required
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Save button */}
-        <div className="flex justify-end pt-4">
-          <Button type="submit" size="lg" disabled={isSaving} className="gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-xs">Activité</Label>
+              <Input
+                value={formData.activityType || ''}
+                onChange={(e) => setFormData({ ...formData, activityType: e.target.value })}
+                className="h-9 text-xs mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Régime Fiscal</Label>
+              <select
+                value={formData.taxRegime || 'Régime Réel'}
+                onChange={(e) => setFormData({ ...formData, taxRegime: e.target.value })}
+                className="w-full h-9 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 text-xs text-zinc-900 dark:text-white mt-1"
+              >
+                <option value="Régime Réel">Régime Réel (Sociétés)</option>
+                <option value="Auto-Entrepreneur">Auto-Entrepreneur</option>
+                <option value="Forfaitaire">Régime Forfaitaire</option>
+              </select>
+            </div>
+            <div>
+              <Label className="text-xs">Préfixe de Facture</Label>
+              <Input
+                value={formData.invoicePrefix || 'FAC'}
+                onChange={(e) => setFormData({ ...formData, invoicePrefix: e.target.value })}
+                className="h-9 text-xs mt-1 font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs">Adresse</Label>
+              <Input
+                value={formData.address || ''}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="h-9 text-xs mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Ville</Label>
+              <Input
+                value={formData.city || ''}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                className="h-9 text-xs mt-1"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs">Téléphone</Label>
+              <Input
+                value={formData.phone || ''}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="h-9 text-xs mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Email Professionnel</Label>
+              <Input
+                type="email"
+                value={formData.email || ''}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="h-9 text-xs mt-1"
+              />
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-emerald-900 dark:text-emerald-300 block">
+                Assujetti à la TVA Tunisienne (19%)
+              </span>
+              <span className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                Active le droit de timbre fiscal de 1.000 DT et le calcul de la TVA.
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              checked={formData.vatRegistered}
+              onChange={(e) => setFormData({ ...formData, vatRegistered: e.target.checked })}
+              className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+            />
+          </div>
+        </div>
+
+        {/* Section 2: Banque & RIB */}
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white border-b border-zinc-100 dark:border-zinc-800 pb-3 flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-emerald-600" />
+            2. Coordonnées Bancaires (RIB)
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs">Établissement Bancaire</Label>
+              <Input
+                value={formData.bankName || 'BIAT'}
+                onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                className="h-9 text-xs mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">RIB (20 chiffres)</Label>
+              <Input
+                value={formData.bankRib || ''}
+                onChange={(e) => setFormData({ ...formData, bankRib: e.target.value })}
+                className="h-9 text-xs mt-1 font-mono tracking-wider"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-xs">Conditions de règlement par défaut</Label>
+            <textarea
+              value={formData.defaultPaymentTerms || ''}
+              onChange={(e) => setFormData({ ...formData, defaultPaymentTerms: e.target.value })}
+              rows={2}
+              className="w-full rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-2.5 text-xs text-zinc-900 dark:text-white mt-1"
+            />
+          </div>
+        </div>
+
+        {/* Section 3: Cachet & Signature */}
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white border-b border-zinc-100 dark:border-zinc-800 pb-3 flex items-center gap-2">
+            <FileCheck2 className="w-4 h-4 text-emerald-600" />
+            3. Visuels Officiels (Cachet & Signature)
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs">Lien Image Cachet Entreprise</Label>
+              <Input
+                placeholder="https://.../cachet.png"
+                value={formData.stampUrl || ''}
+                onChange={(e) => setFormData({ ...formData, stampUrl: e.target.value })}
+                className="h-9 text-xs mt-1 font-mono"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Lien Image Signature Gérant</Label>
+              <Input
+                placeholder="https://.../signature.png"
+                value={formData.signatureUrl || ''}
+                onChange={(e) => setFormData({ ...formData, signatureUrl: e.target.value })}
+                className="h-9 text-xs mt-1 font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={saving}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-10 px-6 font-semibold shadow-sm"
+          >
             <Save className="w-4 h-4" />
-            {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+            {saving ? 'Enregistrement...' : 'Enregistrer les Modifications'}
           </Button>
         </div>
       </form>
     </div>
-  );
+  )
 }

@@ -2,151 +2,175 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AutoLoadRoute } from 'hono-autoload/types';
 import type { Env } from '../../../types/index.js';
 import { tenantMiddleware } from '../../../middleware/tenant.js';
+import { InvoicesService } from '../../../services/invoices.js';
 import {
   listInvoicesRoute,
   getInvoiceRoute,
   createInvoiceRoute,
   updateInvoiceStatusRoute,
   deleteInvoiceRoute,
+  sendInvoiceRoute,
+  cancelInvoiceRoute,
+  duplicateInvoiceRoute,
 } from '../../../schema/v1/invoices.schema.js';
-import { InvoicesService } from '../../../services/invoices.js';
-import { logger } from '../../../utils/logger.js';
+import type { InvoiceStatus } from '@repo/types';
 
 const handler = new OpenAPIHono<Env>();
 
 handler.use('*', tenantMiddleware);
 
 handler.openapi(listInvoicesRoute, async (c) => {
-  const prisma = c.get('prisma');
-  const orgId = c.get('organizationId')!;
-  const { status, clientId, limit } = c.req.valid('query');
-  const service = new InvoicesService({ prisma });
-
+  const orgId = c.get('organizationId');
+  const query = c.req.valid('query');
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
   try {
-    const invoices = await service.listInvoices(orgId, status as any, clientId, limit);
-    return c.json({ data: invoices as any }, 200);
-  } catch (error) {
-    logger.error({ error, scope: 'invoices.list' }, 'Failed to list invoices');
-    return c.json(
-      {
-        error: {
-          message: 'Failed to retrieve invoices',
-          code: 'INVOICES_LIST_FAILED',
-        },
-      },
-      500
+    const service = new InvoicesService();
+    const invoices = await service.listInvoices(
+      orgId,
+      query?.status as InvoiceStatus | undefined,
+      query?.clientId,
+      query?.limit
     );
+    return c.json({ data: invoices as any }, 200);
+  } catch (error: any) {
+    return c.json({ error: { message: error.message || 'Failed to list invoices' } }, 500);
   }
 });
 
 handler.openapi(getInvoiceRoute, async (c) => {
-  const prisma = c.get('prisma');
-  const orgId = c.get('organizationId')!;
+  const orgId = c.get('organizationId');
   const { id } = c.req.valid('param');
-  const service = new InvoicesService({ prisma });
-
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
   try {
-    const invoice = await service.getInvoice(orgId, id);
+    const service = new InvoicesService();
+    const invoice = await service.getInvoiceById(orgId, id);
     if (!invoice) {
-      return c.json(
-        {
-          error: {
-            message: 'Invoice not found',
-            code: 'INVOICE_NOT_FOUND',
-          },
-        },
-        404
-      );
+      return c.json({ error: { message: 'Invoice not found' } }, 404);
     }
     return c.json({ data: invoice as any }, 200);
-  } catch (error) {
-    logger.error({ error, scope: 'invoices.get' }, 'Failed to get invoice');
-    return c.json(
-      {
-        error: {
-          message: 'Failed to retrieve invoice',
-          code: 'INVOICE_GET_FAILED',
-        },
-      },
-      500
-    );
+  } catch (error: any) {
+    return c.json({ error: { message: error.message || 'Failed to get invoice' } }, 500);
   }
 });
 
 handler.openapi(createInvoiceRoute, async (c) => {
-  const prisma = c.get('prisma');
-  const orgId = c.get('organizationId')!;
-  const org = c.get('organization')!;
+  const orgId = c.get('organizationId');
   const body = c.req.valid('json');
-  const service = new InvoicesService({ prisma });
-
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
   try {
-    const created = await service.createInvoice(orgId, body as any, org);
-    return c.json({ data: created as any }, 201);
-  } catch (error) {
-    logger.error({ error, scope: 'invoices.create' }, 'Failed to create invoice');
+    const service = new InvoicesService();
+    const invoice = await service.createInvoice(body, orgId);
+    return c.json({ data: invoice as any }, 201);
+  } catch (error: any) {
+    return c.json({ error: { message: error.message || 'Failed to create invoice' } }, 400);
+  }
+});
+
+handler.openapi(sendInvoiceRoute, async (c) => {
+  const orgId = c.get('organizationId');
+  const { id } = c.req.valid('param');
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
+  try {
+    const service = new InvoicesService();
+    const invoice = await service.sendInvoice(orgId, id);
+    return c.json({ data: invoice as any }, 200);
+  } catch (error: any) {
+    const isNotFound = /not found/i.test(error.message);
     return c.json(
-      {
-        error: {
-          message: error instanceof Error ? error.message : 'Failed to create invoice',
-          code: 'INVOICE_CREATE_FAILED',
-        },
-      },
-      500
+      { error: { message: error.message || 'Failed to send invoice' } },
+      isNotFound ? 404 : 500
+    );
+  }
+});
+
+handler.openapi(cancelInvoiceRoute, async (c) => {
+  const orgId = c.get('organizationId');
+  const { id } = c.req.valid('param');
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
+  try {
+    const service = new InvoicesService();
+    const invoice = await service.cancelInvoice(orgId, id);
+    return c.json({ data: invoice as any }, 200);
+  } catch (error: any) {
+    const isNotFound = /not found/i.test(error.message);
+    return c.json(
+      { error: { message: error.message || 'Failed to cancel invoice' } },
+      isNotFound ? 404 : 500
+    );
+  }
+});
+
+handler.openapi(duplicateInvoiceRoute, async (c) => {
+  const orgId = c.get('organizationId');
+  const { id } = c.req.valid('param');
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
+  try {
+    const service = new InvoicesService();
+    const invoice = await service.duplicateInvoice(orgId, id);
+    return c.json({ data: invoice as any }, 201);
+  } catch (error: any) {
+    const isNotFound = /not found/i.test(error.message);
+    return c.json(
+      { error: { message: error.message || 'Failed to duplicate invoice' } },
+      isNotFound ? 404 : 500
     );
   }
 });
 
 handler.openapi(updateInvoiceStatusRoute, async (c) => {
-  const prisma = c.get('prisma');
-  const orgId = c.get('organizationId')!;
+  const orgId = c.get('organizationId');
   const { id } = c.req.valid('param');
-  const { status } = c.req.valid('json');
-  const service = new InvoicesService({ prisma });
-
+  const body = c.req.valid('json');
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
   try {
-    const updated = await service.updateInvoiceStatus(orgId, id, status as any);
-    return c.json({ data: updated as any }, 200);
-  } catch (error) {
-    logger.error({ error, scope: 'invoices.updateStatus' }, 'Failed to update invoice status');
+    const service = new InvoicesService();
+    const invoice = await service.updateInvoiceStatus(orgId, id, body.status as InvoiceStatus);
+    return c.json({ data: invoice as any }, 200);
+  } catch (error: any) {
+    const isNotFound = /not found/i.test(error.message);
     return c.json(
-      {
-        error: {
-          message: 'Failed to update status',
-          code: 'INVOICE_STATUS_UPDATE_FAILED',
-        },
-      },
-      500
+      { error: { message: error.message || 'Failed to update invoice status' } },
+      isNotFound ? 404 : 400
     );
   }
 });
 
 handler.openapi(deleteInvoiceRoute, async (c) => {
-  const prisma = c.get('prisma');
-  const orgId = c.get('organizationId')!;
+  const orgId = c.get('organizationId');
   const { id } = c.req.valid('param');
-  const service = new InvoicesService({ prisma });
-
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
   try {
+    const service = new InvoicesService();
     await service.deleteInvoice(orgId, id);
     return c.json({ success: true }, 200);
-  } catch (error) {
-    logger.error({ error, scope: 'invoices.delete' }, 'Failed to delete invoice');
+  } catch (error: any) {
+    const isNotFound = /not found/i.test(error.message);
     return c.json(
-      {
-        error: {
-          message: 'Failed to delete invoice',
-          code: 'INVOICE_DELETE_FAILED',
-        },
-      },
-      500
+      { error: { message: error.message || 'Failed to delete invoice' } },
+      isNotFound ? 404 : 500
     );
   }
 });
 
-const routeModule: AutoLoadRoute = {
+const route: AutoLoadRoute = {
   path: '/api/v1/invoices',
-  handler: handler as unknown as AutoLoadRoute['handler'],
+  handler,
 };
 
-export default routeModule;
+export default route;

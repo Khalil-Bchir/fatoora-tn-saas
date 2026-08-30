@@ -1,4 +1,14 @@
-import { LayoutDashboard, Settings, type LucideIcon } from 'lucide-react'
+import {
+  LayoutDashboard,
+  FileText,
+  Sparkles,
+  Users,
+  CheckCircle2,
+  Settings,
+  Building2,
+  User,
+  type LucideIcon,
+} from 'lucide-react'
 
 export interface NavItem {
   title: string
@@ -16,20 +26,45 @@ export interface NavSubItem {
 
 export const navItems: NavItem[] = [
   {
-    title: 'Overview',
+    title: 'Tableau de bord',
     href: '/overview',
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Factures & Devis',
+    href: '/invoices',
+    icon: FileText,
+  },
+  {
+    title: 'Fatoora AI Builder',
+    href: '/invoices/chat',
+    icon: Sparkles,
+    badge: 'AI',
+  },
+  {
+    title: 'Clients',
+    href: '/clients',
+    icon: Users,
+  },
+  {
+    title: 'Vérification Paiements',
+    href: '/payments',
+    icon: CheckCircle2,
   },
 ]
 
 export const userNavItems: NavItem[] = [
   {
-    title: 'Settings',
+    title: 'Paramètres',
     href: '/settings',
     icon: Settings,
     items: [
       {
-        title: 'Account',
+        title: 'Profil Entreprise & Fiscalité',
+        href: '/settings/organization',
+      },
+      {
+        title: 'Mon Compte',
         href: '/settings/account',
       },
     ],
