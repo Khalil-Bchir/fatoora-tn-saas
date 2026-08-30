@@ -8,6 +8,7 @@ import {
   createChatSessionRoute,
   getChatSessionRoute,
   sendMessageRoute,
+  updateDraftRoute,
   finalizeChatSessionRoute,
 } from '../../../schema/v1/chat-sessions.schema.js';
 
@@ -77,6 +78,26 @@ handler.openapi(sendMessageRoute, async (c) => {
     const isNotFound = /not found/i.test(error.message);
     return c.json(
       { error: { message: error.message || 'Failed to send message' } },
+      isNotFound ? 404 : 500
+    );
+  }
+});
+
+handler.openapi(updateDraftRoute, async (c) => {
+  const orgId = c.get('organizationId');
+  const { id } = c.req.valid('param');
+  const body = c.req.valid('json');
+  if (!orgId) {
+    return c.json({ error: { message: 'Organization context missing' } }, 500);
+  }
+  try {
+    const service = new ChatSessionsService(orgId);
+    const result = await service.updateDraft(id, body as any);
+    return c.json({ data: result as any }, 200);
+  } catch (error: any) {
+    const isNotFound = /not found/i.test(error.message);
+    return c.json(
+      { error: { message: error.message || 'Failed to update draft' } },
       isNotFound ? 404 : 500
     );
   }

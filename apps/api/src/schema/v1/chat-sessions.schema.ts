@@ -6,9 +6,11 @@ export const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
   content: z.string(),
   timestamp: z.string().optional(),
+  quickReplies: z.array(z.string()).optional(),
 });
 
 export const extractedItemSchema = z.object({
+  id: z.string().optional(),
   description: z.string(),
   quantity: z.number().default(1),
   unitPrice: z.number().default(0),
@@ -17,6 +19,7 @@ export const extractedItemSchema = z.object({
 });
 
 export const extractedDataSchema = z.object({
+  clientId: z.string().optional(),
   clientName: z.string().optional(),
   clientTaxId: z.string().optional(),
   currency: z.string().default('TND'),
@@ -26,8 +29,12 @@ export const extractedDataSchema = z.object({
   timbreFiscal: z.number().default(1.0),
   total: z.number().default(0),
   notes: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  issueDate: z.string().optional(),
   dueDate: z.string().optional(),
   isReady: z.boolean().default(false),
+  missingField: z.string().optional(),
+  quickReplies: z.array(z.string()).optional(),
 });
 
 export const chatSessionSchema = z.object({
@@ -49,6 +56,20 @@ export const createChatSessionBodySchema = z.object({
 
 export const sendMessageBodySchema = z.object({
   message: z.string().min(1, 'Message is required'),
+});
+
+export const updateDraftBodySchema = z.object({
+  clientName: z.string().optional(),
+  clientTaxId: z.string().optional(),
+  currency: z.string().optional(),
+  items: z.array(extractedItemSchema).optional(),
+  vatApplicable: z.boolean().optional(),
+  defaultVatRate: z.number().optional(),
+  timbreFiscal: z.number().optional(),
+  notes: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  issueDate: z.string().optional(),
+  dueDate: z.string().optional(),
 });
 
 export const listChatSessionsRoute = createRoute({
@@ -175,6 +196,7 @@ export const sendMessageRoute = createRoute({
               session: chatSessionSchema,
               reply: z.string(),
               extractedData: extractedDataSchema,
+              quickReplies: z.array(z.string()).optional(),
             }),
           }),
         },
@@ -185,6 +207,56 @@ export const sendMessageRoute = createRoute({
       content: {
         'application/json': {
           schema: errorResponseSchema,
+        },
+      },
+    },
+    404: {
+      description: 'Session not found',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: 'Server error',
+      content: {
+        'application/json': {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
+
+export const updateDraftRoute = createRoute({
+  method: 'patch',
+  path: '/{id}/draft',
+  tags: ['Chat Sessions'],
+  summary: 'Direct manual edit of draft invoice fields from preview panel',
+  request: {
+    params: z.object({
+      id: z.string(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: updateDraftBodySchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Draft updated and recalculations applied',
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              session: chatSessionSchema,
+              extractedData: extractedDataSchema,
+            }),
+          }),
         },
       },
     },

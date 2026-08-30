@@ -5,9 +5,11 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   timestamp?: string
+  quickReplies?: string[]
 }
 
 export interface ExtractedItem {
+  id?: string
   description: string
   quantity: number
   unitPrice: number
@@ -16,6 +18,7 @@ export interface ExtractedItem {
 }
 
 export interface ExtractedData {
+  clientId?: string
   clientName?: string
   clientTaxId?: string
   currency: string
@@ -25,8 +28,12 @@ export interface ExtractedData {
   timbreFiscal: number
   total: number
   notes?: string
+  paymentTerms?: string
+  issueDate?: string
   dueDate?: string
   isReady: boolean
+  missingField?: string
+  quickReplies?: string[]
 }
 
 export interface ChatSession {
@@ -66,11 +73,22 @@ export const chatService = {
   async sendMessage(
     id: string,
     message: string
-  ): Promise<{ session: ChatSession; reply: string; extractedData: ExtractedData }> {
+  ): Promise<{ session: ChatSession; reply: string; extractedData: ExtractedData; quickReplies?: string[] }> {
     const client = getInvoicesClient()
     const { data } = await client.post<{
-      data: { session: ChatSession; reply: string; extractedData: ExtractedData }
+      data: { session: ChatSession; reply: string; extractedData: ExtractedData; quickReplies?: string[] }
     }>(`/api/v1/chat-sessions/${id}/messages`, { message })
+    return data.data
+  },
+
+  async updateDraft(
+    id: string,
+    updates: Partial<ExtractedData>
+  ): Promise<{ session: ChatSession; extractedData: ExtractedData }> {
+    const client = getInvoicesClient()
+    const { data } = await client.patch<{
+      data: { session: ChatSession; extractedData: ExtractedData }
+    }>(`/api/v1/chat-sessions/${id}/draft`, updates)
     return data.data
   },
 
