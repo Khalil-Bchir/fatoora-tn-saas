@@ -35,7 +35,20 @@ function getUserClient() {
     useCookies: true,
     refreshUrl: AUTH_ROUTES.refresh,
     onRefresh: async () => {
-      await refreshClient.post(AUTH_ROUTES.refresh, {})
+      const auth = (await import('@/store/auth-store')).useAuthStore.getState()
+      const currentRefresh = auth.refreshToken
+      const payload = currentRefresh ? { refreshToken: currentRefresh } : {}
+      const res = await refreshClient.post<{ data: { accessToken: string; refreshToken: string } }>(
+        AUTH_ROUTES.refresh,
+        payload
+      )
+      if (res.data?.data) {
+        auth.setSession({
+          profile: auth.profile!,
+          accessToken: res.data.data.accessToken,
+          refreshToken: res.data.data.refreshToken,
+        })
+      }
     },
   })
   return userClient

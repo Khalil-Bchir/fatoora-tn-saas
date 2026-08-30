@@ -19,10 +19,12 @@ import { USER_ROUTES } from '@/features/users/services/user-service'
 
 export interface AuthState {
   profile: Profile | null
+  accessToken: string | null
+  refreshToken: string | null
   hasHydrated: boolean
   authLoading: boolean
   authError: string | null
-  setSession: (session: { profile: Profile }) => void
+  setSession: (session: { profile: Profile; accessToken?: string; refreshToken?: string }) => void
   clearSession: () => void
   setHasHydrated: (value: boolean) => void
   /** Revalidate profile from server (GET /users/me). Role comes from JWT; keeps UI in sync with token. */
@@ -40,7 +42,7 @@ export interface AuthState {
 const STORAGE_KEY = process.env.NEXT_PUBLIC_APP_AUTH_STORAGE_KEY ?? 'app.auth'
 const baseURL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 
-type PersistedAuthState = Pick<AuthState, 'profile'>
+type PersistedAuthState = Pick<AuthState, 'profile' | 'accessToken' | 'refreshToken'>
 
 const storage =
   typeof window !== 'undefined'
@@ -61,7 +63,18 @@ function getAuthClient(): AxiosInstance {
     useCookies: true,
     refreshUrl: AUTH_ROUTES.refresh,
     onRefresh: async () => {
-      await refreshClient.post(AUTH_ROUTES.refresh, {})
+      const currentRefresh = useAuthStore.getState().refreshToken
+      const payload = currentRefresh ? { refreshToken: currentRefresh } : {}
+      const res = await refreshClient.post<{ data: { accessToken: string; refreshToken: string } }>(
+        AUTH_ROUTES.refresh,
+        payload
+      )
+      if (res.data?.data) {
+        useAuthStore.setState({
+          accessToken: res.data.data.accessToken,
+          refreshToken: res.data.data.refreshToken,
+        })
+      }
     },
   })
   return authClient
@@ -76,13 +89,20 @@ export const useAuthStore = create<AuthState>()(
 
       return {
         profile: null,
+        accessToken: null,
+        refreshToken: null,
         hasHydrated: false,
         authLoading: false,
         authError: null,
-        setSession: ({ profile }) =>
-          set({ profile, hasHydrated: true }),
+        setSession: ({ profile, accessToken, refreshToken }) =>
+          set({
+            profile,
+            accessToken: accessToken ?? get().accessToken,
+            refreshToken: refreshToken ?? get().refreshToken,
+            hasHydrated: true,
+          }),
         clearSession: () =>
-          set({ profile: null, hasHydrated: true }),
+          set({ profile: null, accessToken: null, refreshToken: null, hasHydrated: true }),
         setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
 
         revalidateSession: async () => {
@@ -118,6 +138,8 @@ export const useAuthStore = create<AuthState>()(
             const profile = normalizeProfile(session.user)
             set({
               profile,
+              accessToken: session.accessToken,
+              refreshToken: session.refreshToken ?? null,
               hasHydrated: true,
               authLoading: false,
               authError: null,
@@ -198,7 +220,6 @@ export const useAuthStore = create<AuthState>()(
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${accessToken}`,
               },
-              withCredentials: true,
             })
             await oneOff.post(AUTH_ROUTES.resetPassword, {
               newPassword,
@@ -213,20 +234,18 @@ export const useAuthStore = create<AuthState>()(
           }
         },
 
-        getGoogleOAuthUrl: async (redirectTo?: string): Promise<string> => {
-          setAuthLoading(true)
-          clearAuthError()
+        getGoogleOAuthUrl: async (redirectTo?: string) => {
           try {
             const client = getAuthClient()
-            const { data } = await client.post<{ data: { url: string } }>(AUTH_ROUTES.googleOAuthUrl, {
-              redirectTo,
-            })
-            set({ authLoading: false, authError: null })
+            const { data } = await client.post<{ data: { url: string } }>(
+              AUTH_ROUTES.googleOAuthUrl,
+              { redirectTo }
+            )
             return data.data.url
           } catch (err) {
             const message =
-              err instanceof ApiError ? err.message : 'Could not get Google sign-in URL.'
-            set({ authLoading: false, authError: message })
+              err instanceof ApiError ? err.message : 'Failed to get OAuth URL. Please try again.'
+            set({ authError: message })
             throw err
           }
         },
@@ -238,19 +257,21 @@ export const useAuthStore = create<AuthState>()(
             const client = getAuthClient()
             const { data } = await client.post<{ data: LoginResponseData }>(
               AUTH_ROUTES.googleOAuthCallback,
-              { code, state },
+              { code, state }
             )
             const session = data.data
             const profile = normalizeProfile(session.user)
             set({
               profile,
+              accessToken: session.accessToken,
+              refreshToken: session.refreshToken ?? null,
               hasHydrated: true,
               authLoading: false,
               authError: null,
             })
           } catch (err) {
             const message =
-              err instanceof ApiError ? err.message : 'Google sign-in failed. Please try again.'
+              err instanceof ApiError ? err.message : 'Google authentication failed. Please try again.'
             set({ authLoading: false, authError: message })
             throw err
           }
@@ -263,19 +284,21 @@ export const useAuthStore = create<AuthState>()(
             const client = getAuthClient()
             const { data } = await client.post<{ data: LoginResponseData }>(
               AUTH_ROUTES.googleOAuthTokens,
-              { accessToken, refreshToken },
+              { accessToken, refreshToken }
             )
             const session = data.data
             const profile = normalizeProfile(session.user)
             set({
               profile,
+              accessToken: session.accessToken,
+              refreshToken: session.refreshToken ?? null,
               hasHydrated: true,
               authLoading: false,
               authError: null,
             })
           } catch (err) {
             const message =
-              err instanceof ApiError ? err.message : 'Google sign-in failed. Please try again.'
+              err instanceof ApiError ? err.message : 'Google authentication failed. Please try again.'
             set({ authLoading: false, authError: message })
             throw err
           }
@@ -285,13 +308,14 @@ export const useAuthStore = create<AuthState>()(
     {
       name: STORAGE_KEY,
       storage,
-      partialize: (state: AuthState): PersistedAuthState => ({
+      partialize: (state) => ({
         profile: state.profile,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)
-        if (state?.profile) state?.revalidateSession()
       },
-    },
-  ),
+    }
+  )
 )
