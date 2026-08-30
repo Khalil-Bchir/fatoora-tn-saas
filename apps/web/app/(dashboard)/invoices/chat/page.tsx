@@ -196,7 +196,10 @@ export default function InvoiceChatPage() {
       </div>
 
       {/* Repeat Shortcuts & Quick Chips */}
-      <div className="bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-xl p-3.5 flex items-center gap-2 overflow-x-auto scrollbar-none">
+      <div
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-xl p-3.5 flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-none"
+      >
         <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
           <Sparkles className="w-3 h-3 text-emerald-600" /> Raccourcis :
         </span>

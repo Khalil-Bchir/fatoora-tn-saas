@@ -199,7 +199,10 @@ export default function InvoicesPage() {
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl p-4 shadow-sm space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Status Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          <div
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 no-scrollbar scrollbar-none"
+          >
             {STATUS_FILTERS.map((f) => (
               <button
                 key={f.value}
