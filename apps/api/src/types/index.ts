@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { PrismaClient } from '@repo/database'
+import type { PrismaClient, Organization } from '@repo/database'
 import type { i18n } from 'i18next'
 import type { Database } from '@repo/types'
 
@@ -11,10 +11,13 @@ export interface Env {
     i18n?: i18n
     language?: string
     requestId?: string
+    organizationId?: string
+    organization?: Organization
     user?: {
       id: string
       email?: string
       role?: string
+      organizationId?: string
     }
   }
 }
@@ -22,4 +25,3 @@ export interface Env {
 export type AppContext = Context<Env>
 
 export type { Database, Tables, TablesInsert, TablesUpdate, Enums, CompositeTypes } from '@repo/types'
-

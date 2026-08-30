@@ -1,313 +1,182 @@
-# SaaS Boilerplate - Next.js + Hono Monorepo
+# 🧾 Fatoora TN — Multi-Tenant Invoicing SaaS Platform (Tunisia-Focused)
 
-A production-ready, full-stack SaaS boilerplate built with Next.js, Hono, Supabase, and Prisma. This monorepo provides a complete foundation for building modern SaaS applications with authentication, authorization, database management, and more.
+A production-ready, full-stack **Multi-Tenant Invoicing Platform** tailored for Tunisian businesses, freelancers, and auto-entrepreneurs. Built with **Next.js 15**, **Hono OpenAPI**, **Prisma**, **PostgreSQL**, **Tailwind CSS v4**, **shadcn/ui**, and pre-loaded with **133 Antigravity AI Skills**.
 
-## 🏗️ Architecture
+---
 
-This is a **Turborepo monorepo** containing:
+## 🌟 Overview & Tunisian Legal Context
 
-- **`apps/api`** - Hono.js REST API backend with Supabase Auth
-- **`apps/web`** - Next.js 16 frontend application
-- **`packages/database`** - Prisma schema and database utilities
-- **`packages/types`** - Shared TypeScript types and constants
-- **`packages/eslint-config`** - Shared ESLint configurations
-- **`packages/typescript-config`** - Shared TypeScript configurations
+In Tunisia, invoicing requirements vary significantly across tax regimes:
+- **Auto-Entrepreneurs**: Exempt from VAT, revenue capped at 75,000 DT/year. Invoices require clear legal exemption notices.
+- **Régime Forfaitaire / Réel**: VAT-registered businesses subject to standard legal tax rates (0%, 7%, 13%, 19%), mandatory *Droit de Timbre Fiscal* (1.000 DT), and the upcoming *El Fatoora* / TEIF electronic invoicing obligation via TTN (TunisieTradeNet) and TunTrust.
+- **Banking Reality**: No open banking APIs exist in Tunisia for direct account reconciliation. The platform provides a robust two-step manual payment confirmation flow via tokenized client proof uploads.
 
-## ✨ Features
+**Fatoora TN** is architected from the data model up to support strict multi-tenant data isolation, sequential per-organization numbering, automatic Tunisian fiscal calculations, stamp & signature embedding, and shareable public invoice links.
 
-### Backend (API)
-- ✅ **Hono.js** - Fast, lightweight web framework
-- ✅ **Supabase Auth** - Complete authentication system (email/password, OAuth)
-- ✅ **Prisma ORM** - Type-safe database access
-- ✅ **OpenAPI/Swagger** - Auto-generated API documentation
-- ✅ **JWT Authentication** - Secure token-based auth with refresh tokens
-- ✅ **Cookie-based Sessions** - HTTP-only cookies for security
-- ✅ **Middleware Stack** - CORS, compression, rate limiting, error handling
-- ✅ **i18n Support** - Internationalization with i18next
-- ✅ **Request Logging** - Structured logging with Pino
+---
 
-### Frontend (Web)
-- ✅ **Next.js 16** - React framework with App Router
-- ✅ **React 19** - Latest React features
-- ✅ **TypeScript** - Full type safety
-- ✅ **Zustand** - State management with persistence
-- ✅ **Axios** - HTTP client with automatic token refresh
-- ✅ **shadcn/ui** - Beautiful, accessible UI components
-- ✅ **Tailwind CSS** - Utility-first CSS framework
-- ✅ **Theme Support** - Dark/light mode with system preference
-- ✅ **Form Handling** - React Hook Form with Zod validation
+## 🏗️ Monorepo Architecture
 
-### Database & Types
-- ✅ **Prisma** - Database schema management
-- ✅ **PostgreSQL** - Via Supabase
-- ✅ **Type Generation** - Auto-generated types from database schema
-- ✅ **Migrations** - Version-controlled database changes
-- ✅ **Seeding** - Environment-specific seed data
+This project is a **Turborepo** monorepo:
 
-## 📋 Prerequisites
-
-- **Node.js** 22.x or higher
-- **pnpm** 9.0.0 or higher (package manager)
-- **PostgreSQL** database (via Supabase or self-hosted)
-- **Supabase** account (for authentication and storage)
-
-## 🚀 Quick Start
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd saas-boilerplate-next-hono
+```text
+├── apps/
+│   ├── api/                    # Hono.js OpenAPI backend service
+│   │   ├── src/
+│   │   │   ├── middleware/     # Tenant isolation & security middlewares
+│   │   │   ├── routes/v1/      # Invoices, Clients, Organizations, Public routes
+│   │   │   ├── schema/v1/      # Zod OpenAPI contracts
+│   │   │   └── services/       # Business logic (VAT calculation, Markdown generator)
+│   └── web/                    # Next.js 15 App Router frontend
+│       ├── app/
+│       │   ├── (dashboard)/    # Invoices, Clients, Organization settings
+│       │   └── i/[token]/      # Public client invoice view & proof submission
+│       ├── components/ui/      # shadcn/ui component library
+│       └── store/              # Zustand state stores (invoices, clients, organization)
+├── packages/
+│   ├── database/               # Prisma schema & PostgreSQL client
+│   ├── types/                  # Shared TypeScript types & DTOs
+│   ├── eslint-config/          # Shared ESLint configuration
+│   └── typescript-config/      # Shared TypeScript base configs
+└── .agents/
+    └── skills/                 # 133 Pre-integrated Antigravity AI skills
 ```
 
-### 2. Install Dependencies
+---
+
+## ✨ Key Features
+
+### 🏢 1. Strict Multi-Tenant Data Isolation
+- Every business-owned entity belongs to an `organizationId`.
+- Server-side tenant middleware verifies and scopes every query: a bug that leaks tenant invoices or client details across tenants is strictly prevented by design.
+
+### 💰 2. Tunisian Fiscal & VAT Compliance Engine
+- **Tax Regimes**: Auto-Entrepreneur, Régime Forfaitaire, Régime Réel.
+- **Automatic Calculations**:
+  - Subtotal Hors Taxe (HT)
+  - Selective Line-Item TVA (0%, 7%, 13%, 19%)
+  - Configurable Droit de Timbre Fiscal (1.000 DT)
+  - Total TTC / Net à Payer
+- **Legal Notices**: Auto-generates VAT exemption clauses for auto-entrepreneurs and compliance banners for VAT-registered entities.
+
+### 🔢 3. Per-Tenant Sequential Invoicing
+- Atomic sequential numbering per organization (e.g. `FAC-2026-0001`, `FAC-2026-0002`).
+- Custom invoice prefixes (`FAC`, `INV`, `DEV`) and configurable payment terms.
+
+### 🔏 4. Cachet, Signature & Branding
+- Organizations upload stamp/cachet and signature images during setup.
+- Automatically stamped on digital invoice previews and PDF/print outputs.
+
+### 🔗 5. Tokenized Public Share Link & Payment Proof Flow
+- Clients view invoices via cryptographically secure tokens (`/i/[token]`) without requiring an account.
+- Direct upload of bank transfer receipts (*Reçu de virement / versement*).
+- Real-time status lifecycle: `DRAFT` ➔ `SENT` ➔ `AWAITING_PAYMENT` ➔ `PAYMENT_CLAIMED` ➔ `PAID` (or `OVERDUE` / `CANCELLED`).
+
+### 📦 6. Export Options
+- Instant Browser Print / Save to PDF.
+- Clean Markdown export with complete tabular itemization and Tunisian legal coordinates.
+
+---
+
+## 🤖 Integrated Antigravity Skills (133 Skills)
+
+Located in [`.agents/skills/`](file:///.agents/skills), the codebase includes:
+- **`frontend-expert` & `frontend-design`**: Modern React 19, Suspense architecture, type-safe components.
+- **`shadcn` & `uiux-designer`**: Polished, accessible UI design system.
+- **`api-builder` & `sql-optimization`**: Hono OpenAPI schemas and query optimization.
+- **`bullmq-specialist`**: Redis queue setup for automated overdue sweeps and asynchronous notifications.
+- **`email-systems` & `code-reviewer`**: Automated reviews and communication pipelines.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Monorepo** | [Turborepo](https://turbo.build/), [pnpm](https://pnpm.io/) |
+| **Frontend** | [Next.js 15](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [Tailwind CSS v4](https://tailwindcss.com/), [shadcn/ui](https://ui.shadcn.com/), [Zustand](https://github.com/pmndrs/zustand), [Sonner](https://sonner.emilkowal.ski/) |
+| **Backend API** | [Hono](https://hono.dev/) (Node.js runtime), [@hono/zod-openapi](https://github.com/honojs/middleware/tree/main/packages/zod-openapi), [Pino](https://getpino.io/) |
+| **Database** | [PostgreSQL](https://www.postgresql.org/), [Prisma ORM](https://www.prisma.io/) |
+| **Auth & Storage** | [Supabase](https://supabase.com/) |
+| **Validation** | [Zod](https://zod.dev/) |
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone & Install
 
 ```bash
+git clone https://github.com/Khalil-Bchir/fatoora-tn-saas.git
+cd fatoora-tn-saas
 pnpm install
 ```
 
-### 3. Set Up Environment Variables
+### 2. Configure Environment
 
-Copy the example environment file and configure it:
+Copy `.env.example` to `.env.development`:
 
 ```bash
 cp .env.example .env.development
 ```
 
-Edit `.env.development` with your actual values. See [docs/SETUP.md](./docs/SETUP.md) for detailed setup instructions.
+Configure your `DATABASE_URL` and `DIRECT_URL` with your PostgreSQL database credentials.
 
-### 4. Set Up Database
+### 3. Generate Prisma Client & Migrate
 
 ```bash
-# Generate Prisma client
-pnpm --filter @repo/database db:generate
-
-# Run migrations
-pnpm --filter @repo/database db:migrate:dev
-
-# (Optional) Seed the database
-pnpm --filter @repo/database db:seed:dev
+pnpm --filter @repo/database run db:generate
+pnpm --filter @repo/database run db:migrate:dev
 ```
 
-### 5. Start Development Servers
+### 4. Start Development Servers
 
 ```bash
-# Start both API and web apps
 pnpm dev
 ```
 
-- **API**: http://localhost:3000
-- **Web**: http://localhost:3001
-- **API Docs**: http://localhost:3000/docs
+- **Frontend App**: `http://localhost:3001`
+- **Backend API**: `http://localhost:3000`
+- **Swagger Documentation**: `http://localhost:3000/docs`
 
-## 📁 Project Structure
+---
 
-```
-.
-├── apps/
-│   ├── api/              # Hono.js backend API
-│   │   ├── src/
-│   │   │   ├── config/    # Configuration (env, etc.)
-│   │   │   ├── middleware/ # Request middleware
-│   │   │   ├── routes/    # API route handlers
-│   │   │   ├── services/  # Business logic
-│   │   │   ├── schema/    # Zod validation schemas
-│   │   │   ├── utils/     # Utility functions
-│   │   │   └── lib/       # External service clients
-│   │   └── package.json
-│   │
-│   └── web/               # Next.js frontend
-│       ├── app/           # Next.js App Router pages
-│       ├── components/    # React components
-│       ├── features/      # Feature modules
-│       ├── store/         # Zustand stores
-│       ├── lib/           # Utilities and helpers
-│       └── package.json
-│
-├── packages/
-│   ├── database/         # Prisma schema and client
-│   │   ├── prisma/
-│   │   │   └── schema.prisma
-│   │   └── src/
-│   │
-│   ├── types/            # Shared TypeScript types
-│   │   └── src/
-│   │
-│   ├── eslint-config/    # Shared ESLint configs
-│   │
-│   └── typescript-config/ # Shared TypeScript configs
-│
-├── docs/                 # Documentation
-│   ├── SETUP.md         # Detailed setup guide
-│   └── AUTH.md          # Authentication system docs
-│
-├── turbo.json           # Turborepo configuration
-├── pnpm-workspace.yaml  # pnpm workspace config
-└── package.json         # Root package.json
-```
+## 📖 API Endpoints Overview
 
-## 🛠️ Available Scripts
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/organization` | Retrieve current tenant profile & fiscal settings |
+| `PATCH` | `/api/v1/organization` | Update business name, tax regime, stamp, bank RIB |
+| `GET` | `/api/v1/clients` | List tenant-scoped clients |
+| `POST` | `/api/v1/clients` | Create a new client (with matricule fiscal for B2B) |
+| `GET` | `/api/v1/invoices` | List invoices with status filter |
+| `POST` | `/api/v1/invoices` | Create invoice with sequential number & VAT calculation |
+| `GET` | `/api/v1/invoices/:id` | Get full invoice details, items, and payment proofs |
+| `PATCH` | `/api/v1/invoices/:id/status` | Update invoice lifecycle status |
+| `GET` | `/api/v1/public/invoices/:token` | Public tokenized invoice view for clients |
+| `POST` | `/api/v1/public/invoices/:token/payment-proof` | Submit bank transfer receipt |
 
-### Root Level
+---
 
-```bash
-# Development
-pnpm dev              # Start all apps in development mode
+## 🗺️ Roadmap
 
-# Building
-pnpm build            # Build all apps and packages
+- [x] **Phase 1: Multi-Tenant Foundation**
+  - [x] Multi-tenant Prisma schema with Tunisian tax regimes
+  - [x] Strict tenant isolation middleware
+  - [x] Client & Invoice CRUD with sequential numbering
+  - [x] Live VAT (0/7/13/19%) and Timbre Fiscal calculation
+  - [x] Tokenized shareable public link & proof upload
+  - [x] Stamp/Cachet and signature visualization
+- [ ] **Phase 2: AI & Automation**
+  - [ ] AI Chatbot Invoice Assistant (Vercel AI SDK)
+  - [ ] Automated BullMQ cron jobs for overdue reminders
+  - [ ] Automated email dispatch
+- [ ] **Phase 3: Legal & Regulatory**
+  - [ ] El Fatoora (TEIF) XML generation
+  - [ ] TunTrust digital certificate signing & TTN integration
 
-# Code Quality
-pnpm lint             # Lint all packages
-pnpm format           # Format code with Prettier
-pnpm check-types       # Type-check all packages
+---
 
-# Database (from root)
-pnpm --filter @repo/database db:migrate:dev    # Run migrations
-pnpm --filter @repo/database db:generate       # Generate Prisma client
-pnpm --filter @repo/database db:seed:dev       # Seed database
-pnpm --filter @repo/database db:studio         # Open Prisma Studio
-```
+## 📄 License
 
-### API App (`apps/api`)
-
-```bash
-pnpm --filter api dev      # Start API dev server
-pnpm --filter api build    # Build API
-pnpm --filter api start    # Start production server
-```
-
-### Web App (`apps/web`)
-
-```bash
-pnpm --filter web dev      # Start Next.js dev server
-pnpm --filter web build    # Build Next.js app
-pnpm --filter web start    # Start production server
-```
-
-## 🔐 Authentication System
-
-This boilerplate includes a complete authentication system built on Supabase Auth. Features include:
-
-- Email/password authentication
-- Google OAuth integration
-- Password reset flow
-- Email verification
-- JWT tokens with refresh mechanism
-- Cookie-based session management
-- Role-based access control (USER, ADMIN, DEMO)
-
-See [docs/AUTH.md](./docs/AUTH.md) for comprehensive documentation on how the authentication system works.
-
-## 📚 Documentation
-
-- **[Setup Guide](./docs/SETUP.md)** - Detailed instructions for setting up the project
-- **[Authentication System](./docs/AUTH.md)** - Complete auth system documentation
-- **[API README](./apps/api/README.md)** - API-specific documentation
-- **[Web README](./apps/web/README.md)** - Frontend-specific documentation
-
-## 🧩 Packages
-
-### `@repo/database`
-
-Prisma-based database package with schema, migrations, and client generation.
-
-**Key Features:**
-- Type-safe database access
-- Migration management
-- Environment-specific seeding
-- Prisma Studio integration
-
-See [packages/database/README.md](./packages/database/README.md) for details.
-
-### `@repo/types`
-
-Shared TypeScript types and constants used across the monorepo.
-
-**Exports:**
-- Database types (from Prisma)
-- User roles and enums
-- Common type definitions
-
-See [packages/types/README.md](./packages/types/README.md) for details.
-
-### `@repo/eslint-config`
-
-Shared ESLint configurations for consistent code quality.
-
-**Configs:**
-- Base configuration
-- Next.js specific
-- React internal
-
-See [packages/eslint-config/README.md](./packages/eslint-config/README.md) for details.
-
-### `@repo/typescript-config`
-
-Shared TypeScript configurations for consistent type checking.
-
-**Configs:**
-- Base TypeScript config
-- Next.js config
-- Node.js config
-- React library config
-
-See [packages/typescript-config/README.md](./packages/typescript-config/README.md) for details.
-
-## 🔧 Configuration
-
-### Environment Variables
-
-The project uses environment-specific configuration files:
-
-- `.env.development` - Development environment
-- `.env.staging` - Staging environment
-- `.env.production` - Production environment
-
-See `.env.example` for all available variables and their descriptions.
-
-### Turborepo
-
-Build orchestration and caching is handled by Turborepo. Configuration is in `turbo.json`.
-
-### pnpm Workspaces
-
-Package management and workspace configuration is handled by pnpm. See `pnpm-workspace.yaml`.
-
-## 🚢 Deployment
-
-### API Deployment
-
-1. Set all required environment variables
-2. Build the API: `pnpm --filter api build`
-3. Run migrations: `pnpm --filter @repo/database db:migrate:prod`
-4. Start the server: `pnpm --filter api start`
-
-### Web Deployment
-
-1. Set all `NEXT_PUBLIC_*` environment variables
-2. Build the app: `pnpm --filter web build`
-3. Start the server: `pnpm --filter web start`
-
-For Vercel deployment, the build process is handled automatically.
-
-## 🤝 Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Run linting and type checking: `pnpm lint && pnpm check-types`
-4. Commit using conventional commits: `pnpm commit`
-5. Push and create a pull request
-
-## 📝 License
-
-MIT
-
-## 🙏 Acknowledgments
-
-- [Hono](https://hono.dev/) - Fast web framework
-- [Next.js](https://nextjs.org/) - React framework
-- [Supabase](https://supabase.com/) - Backend as a service
-- [Prisma](https://www.prisma.io/) - Next-generation ORM
-- [Turborepo](https://turbo.build/) - Monorepo build system
-- [shadcn/ui](https://ui.shadcn.com/) - UI components
+MIT © [Khalil Bchir](https://github.com/Khalil-Bchir)
