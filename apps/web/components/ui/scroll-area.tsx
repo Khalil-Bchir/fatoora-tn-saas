@@ -8,12 +8,14 @@ import { cn } from '@/lib/utils'
 function ScrollArea({
   className,
   children,
+  type = 'always',
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
   return (
     <ScrollAreaPrimitive.Root
       data-slot="scroll-area"
-      className={cn('relative', className)}
+      type={type}
+      className={cn('relative overflow-hidden', className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
@@ -38,19 +40,18 @@ function ScrollBar({
       data-slot="scroll-area-scrollbar"
       orientation={orientation}
       className={cn(
-        'flex touch-none p-px transition-colors select-none',
-        'opacity-100 hover:opacity-100',
+        'flex touch-none p-0.5 transition-colors select-none z-40',
         orientation === 'vertical' &&
-          'h-full w-2.5 border-l border-l-transparent',
+          'h-full w-2.5 bg-zinc-200/40 dark:bg-zinc-800/60 rounded-full my-1 mr-0.5',
         orientation === 'horizontal' &&
-          'h-2.5 flex-col border-t border-t-transparent',
+          'h-2.5 flex-col bg-zinc-200/40 dark:bg-zinc-800/60 rounded-full mx-1 mb-0.5',
         className,
       )}
       {...props}
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
         data-slot="scroll-area-thumb"
-        className="bg-zinc-400/60 dark:bg-zinc-600 hover:bg-zinc-500 dark:hover:bg-zinc-500 relative flex-1 rounded-full transition-colors"
+        className="bg-zinc-400 dark:bg-zinc-500 hover:bg-zinc-600 dark:hover:bg-zinc-300 relative flex-1 rounded-full transition-colors cursor-pointer"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   )

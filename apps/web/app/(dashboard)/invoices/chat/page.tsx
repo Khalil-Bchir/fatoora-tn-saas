@@ -272,9 +272,9 @@ export default function InvoiceChatPage() {
       {/* Main Dual-Pane Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Chat Conversation & Quick-Reply Chips */}
-        <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 shadow-sm flex flex-col h-[650px] overflow-hidden">
+        <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 shadow-sm flex flex-col h-[650px] max-h-[calc(100vh-200px)] overflow-hidden">
           {/* Chat Messages */}
-          <ScrollArea className="flex-1 pr-3" type="always">
+          <ScrollArea className="flex-1 min-h-0 pr-3" type="always">
             <div className="space-y-4 pb-2">
               {messages.map((msg, idx) => {
                 const isUser = msg.role === 'user'
@@ -361,7 +361,7 @@ export default function InvoiceChatPage() {
         </div>
 
         {/* Right Column: Live Editable Preview Panel */}
-        <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 shadow-sm flex flex-col h-[650px] overflow-hidden">
+        <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 shadow-sm flex flex-col h-[650px] max-h-[calc(100vh-200px)] overflow-hidden">
           {/* Header & Direct Edit Toggle */}
           <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
@@ -387,7 +387,7 @@ export default function InvoiceChatPage() {
           </div>
 
           {/* Scrollable Document Content */}
-          <ScrollArea className="flex-1 pr-3 my-3">
+          <ScrollArea className="flex-1 min-h-0 pr-3 my-3" type="always">
             <div className="space-y-4">
               {/* Emitter Header */}
               {org && (
