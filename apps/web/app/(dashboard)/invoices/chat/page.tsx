@@ -274,7 +274,7 @@ export default function InvoiceChatPage() {
         {/* Left Column: Chat Conversation & Quick-Reply Chips */}
         <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 shadow-sm flex flex-col h-[650px] overflow-hidden">
           {/* Chat Messages */}
-          <ScrollArea className="flex-1 pr-3">
+          <ScrollArea className="flex-1 pr-3" type="always">
             <div className="space-y-4 pb-2">
               {messages.map((msg, idx) => {
                 const isUser = msg.role === 'user'
