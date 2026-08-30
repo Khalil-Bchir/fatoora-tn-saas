@@ -25,6 +25,21 @@ export interface StorageUploadOptions {
 }
 
 export class StorageService {
+  private static bucketEnsured = false;
+
+  /**
+   * Ensures the storage bucket exists and is set to public so that media can be loaded without 403 errors
+   */
+  static async ensureBucketPublic() {
+    if (this.bucketEnsured) return;
+    try {
+      await supabase.storage.updateBucket(BUCKET_NAME, { public: true });
+      this.bucketEnsured = true;
+    } catch (err) {
+      logger.warn({ err }, 'Could not automatically ensure bucket public setting');
+    }
+  }
+
   /**
    * Builds an organized, structured storage path based on media type and owner IDs
    * Example:
@@ -69,6 +84,8 @@ export class StorageService {
     meta?: { organizationId?: string; invoiceId?: string }
   ): Promise<string> {
     try {
+      await this.ensureBucketPublic();
+
       let mimeType = 'image/png';
       let cleanBase64 = base64Data;
 
@@ -80,11 +97,22 @@ export class StorageService {
         }
       }
 
-      const buffer = Buffer.from(cleanBase64, 'base64');
-      const ext = originalName.includes('.')
-        ? originalName.split('.').pop() || 'png'
-        : mimeType.split('/').pop() || 'png';
+      const mimeExtMap: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/svg+xml': 'svg',
+        'application/pdf': 'pdf',
+      };
 
+      let ext = mimeExtMap[mimeType.toLowerCase()] || 'png';
+      if (originalName.includes('.')) {
+        const fileExt = originalName.split('.').pop()?.toLowerCase();
+        if (fileExt) ext = fileExt;
+      }
+
+      const buffer = Buffer.from(cleanBase64, 'base64');
       const filePath = this.buildStructuredPath(
         {
           folder,
@@ -129,9 +157,22 @@ export class StorageService {
     meta?: { organizationId?: string; invoiceId?: string }
   ): Promise<string> {
     try {
-      const ext = originalName.includes('.')
-        ? originalName.split('.').pop() || 'png'
-        : contentType.split('/').pop() || 'png';
+      await this.ensureBucketPublic();
+
+      const mimeExtMap: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/svg+xml': 'svg',
+        'application/pdf': 'pdf',
+      };
+
+      let ext = mimeExtMap[contentType.toLowerCase()] || 'png';
+      if (originalName.includes('.')) {
+        const fileExt = originalName.split('.').pop()?.toLowerCase();
+        if (fileExt) ext = fileExt;
+      }
 
       const filePath = this.buildStructuredPath(
         {
