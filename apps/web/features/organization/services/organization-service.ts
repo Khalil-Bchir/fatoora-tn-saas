@@ -26,6 +26,7 @@ export interface Organization {
   bankName?: string | null
   bankRib?: string | null
   bankIban?: string | null
+  bankBic?: string | null
   invoicePrefix?: string
   defaultPaymentTerms?: string | null
   invoiceCounter: number
