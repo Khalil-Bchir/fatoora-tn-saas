@@ -8,10 +8,15 @@ import { logger } from '../../../utils/logger.js';
 const handler = new OpenAPIHono<Env>();
 
 handler.openapi(uploadMediaRoute, async (c) => {
-  const { data, fileName, folder } = c.req.valid('json');
+  const { data, fileName, folder, organizationId, invoiceId } = c.req.valid('json');
+  const orgIdFromContext = c.get('organizationId');
+  const resolvedOrgId = organizationId || (typeof orgIdFromContext === 'string' ? orgIdFromContext : undefined);
 
   try {
-    const publicUrl = await StorageService.uploadBase64(data, fileName, folder as any);
+    const publicUrl = await StorageService.uploadBase64(data, fileName, folder as any, {
+      organizationId: resolvedOrgId,
+      invoiceId,
+    });
 
     return c.json(
       {

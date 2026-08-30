@@ -32,6 +32,8 @@ const envSchema = z.object({
   SUPABASE_ANON_KEY: z.string(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_STORAGE: z.string().default('docs'),
+  SUPABASE_STORAGE_ACCESS_KEY_ID: z.string().optional(),
+  SUPABASE_STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
   SUPABASE_EMAIL_REDIRECT_URL: z.string().url().optional(),
   SUPABASE_RESET_REDIRECT_URL: z.string().url().optional(),
   SUPABASE_OAUTH_REDIRECT_URL: z.string().url().optional(),

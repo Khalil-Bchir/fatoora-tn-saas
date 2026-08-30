@@ -9,14 +9,64 @@ const supabase = createClient(
 
 const BUCKET_NAME = env.SUPABASE_STORAGE || 'docs';
 
+export type StorageCategory =
+  | 'stamps'
+  | 'signatures'
+  | 'logos'
+  | 'payment-proofs'
+  | 'invoices-pdf'
+  | 'general';
+
+export interface StorageUploadOptions {
+  folder: StorageCategory;
+  organizationId?: string;
+  invoiceId?: string;
+  originalName?: string;
+}
+
 export class StorageService {
   /**
-   * Upload a base64 encoded file string (e.g. data:image/png;base64,...) directly to Supabase Storage
+   * Builds an organized, structured storage path based on media type and owner IDs
+   * Example:
+   *  - organizations/org_123/stamps/stamp_1788123456_cachet.png
+   *  - invoices/org_123/inv_456/payment-proofs/proof_1788123456_recu.pdf
+   */
+  static buildStructuredPath(options: StorageUploadOptions, extension: string): string {
+    const orgPart = options.organizationId
+      ? options.organizationId.replace(/[^a-zA-Z0-9_-]/g, '')
+      : 'global';
+    const invoicePart = options.invoiceId
+      ? options.invoiceId.replace(/[^a-zA-Z0-9_-]/g, '')
+      : 'unassigned';
+    const rawName = (options.originalName || 'file')
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_');
+    const timestamp = Date.now();
+
+    switch (options.folder) {
+      case 'stamps':
+        return `organizations/${orgPart}/stamps/stamp_${timestamp}_${rawName}.${extension}`;
+      case 'signatures':
+        return `organizations/${orgPart}/signatures/signature_${timestamp}_${rawName}.${extension}`;
+      case 'logos':
+        return `organizations/${orgPart}/logos/logo_${timestamp}_${rawName}.${extension}`;
+      case 'payment-proofs':
+        return `invoices/${orgPart}/${invoicePart}/payment-proofs/proof_${timestamp}_${rawName}.${extension}`;
+      case 'invoices-pdf':
+        return `invoices/${orgPart}/${invoicePart}/invoice_${timestamp}_${rawName}.pdf`;
+      default:
+        return `general/${orgPart}/${timestamp}_${rawName}.${extension}`;
+    }
+  }
+
+  /**
+   * Upload a base64 encoded file string (e.g. data:image/png;base64,...) to Supabase Storage
    */
   static async uploadBase64(
     base64Data: string,
     originalName: string,
-    folder: 'signatures' | 'stamps' | 'payment-proofs' | 'logos' | 'general' = 'general'
+    folder: StorageCategory = 'general',
+    meta?: { organizationId?: string; invoiceId?: string }
   ): Promise<string> {
     try {
       let mimeType = 'image/png';
@@ -32,12 +82,18 @@ export class StorageService {
 
       const buffer = Buffer.from(cleanBase64, 'base64');
       const ext = originalName.includes('.')
-        ? originalName.split('.').pop()
+        ? originalName.split('.').pop() || 'png'
         : mimeType.split('/').pop() || 'png';
-      const cleanFileName = originalName
-        .replace(/\.[^/.]+$/, '')
-        .replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filePath = `${folder}/${Date.now()}_${cleanFileName}.${ext}`;
+
+      const filePath = this.buildStructuredPath(
+        {
+          folder,
+          originalName,
+          organizationId: meta?.organizationId,
+          invoiceId: meta?.invoiceId,
+        },
+        ext
+      );
 
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
@@ -69,16 +125,23 @@ export class StorageService {
     buffer: Buffer,
     originalName: string,
     contentType: string,
-    folder: 'signatures' | 'stamps' | 'payment-proofs' | 'logos' | 'general' = 'general'
+    folder: StorageCategory = 'general',
+    meta?: { organizationId?: string; invoiceId?: string }
   ): Promise<string> {
     try {
       const ext = originalName.includes('.')
-        ? originalName.split('.').pop()
+        ? originalName.split('.').pop() || 'png'
         : contentType.split('/').pop() || 'png';
-      const cleanFileName = originalName
-        .replace(/\.[^/.]+$/, '')
-        .replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filePath = `${folder}/${Date.now()}_${cleanFileName}.${ext}`;
+
+      const filePath = this.buildStructuredPath(
+        {
+          folder,
+          originalName,
+          organizationId: meta?.organizationId,
+          invoiceId: meta?.invoiceId,
+        },
+        ext
+      );
 
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)

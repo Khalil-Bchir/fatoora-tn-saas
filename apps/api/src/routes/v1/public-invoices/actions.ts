@@ -70,7 +70,11 @@ handler.openapi(submitPublicPaymentProofRoute, async (c) => {
       finalFileUrl = await StorageService.uploadBase64(
         body.fileUrl,
         `proof_${invoice.invoiceNumber || 'invoice'}.png`,
-        'payment-proofs'
+        'payment-proofs',
+        {
+          organizationId: invoice.organizationId,
+          invoiceId: invoice.id,
+        }
       );
     }
 

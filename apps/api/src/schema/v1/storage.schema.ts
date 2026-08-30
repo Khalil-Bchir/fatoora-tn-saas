@@ -4,7 +4,9 @@ import { errorResponseSchema } from './common.schema.js';
 export const uploadMediaBodySchema = z.object({
   data: z.string().min(1, 'Base64 data or content is required'),
   fileName: z.string().default('media.png'),
-  folder: z.enum(['signatures', 'stamps', 'payment-proofs', 'logos', 'general']).default('general'),
+  folder: z.enum(['signatures', 'stamps', 'payment-proofs', 'logos', 'invoices-pdf', 'general']).default('general'),
+  organizationId: z.string().optional(),
+  invoiceId: z.string().optional(),
 });
 
 export const uploadMediaResponseSchema = z.object({
