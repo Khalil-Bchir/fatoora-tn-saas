@@ -190,7 +190,7 @@ export default function InvoiceDetailPage({
     (invoice.organization as any)?.signatureImageUrl || invoice.organization?.signatureUrl
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
+    <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6 print:p-0 print:m-0 print:max-w-none print:space-y-0">
       {/* Top Action Bar (Hidden during Print / PDF Export) */}
       <div className="no-print print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs">
         <div className="flex items-center gap-3">
