@@ -100,6 +100,8 @@ export interface Invoice {
     bankRib?: string | null
     stampUrl?: string | null
     signatureUrl?: string | null
+    stampImageUrl?: string | null
+    signatureImageUrl?: string | null
     logoUrl?: string | null
   }
   paymentProofs?: Array<{

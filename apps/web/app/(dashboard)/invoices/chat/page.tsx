@@ -29,6 +29,10 @@ import {
   type ExtractedItem,
 } from '@/features/chat/services/chat-service'
 import { clientService, type Client } from '@/features/clients/services/client-service'
+import {
+  organizationService,
+  type Organization,
+} from '@/features/organization/services/organization-service'
 
 const STARTER_SHORTCUTS = [
   'Facture pour Acme, 10 heures de dév à 50 TND/h, due dans 15 jours',
@@ -76,6 +80,7 @@ export default function InvoiceChatPage() {
   const [session, setSession] = useState<ChatSession | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [extracted, setExtracted] = useState<ExtractedData | null>(null)
+  const [org, setOrg] = useState<Organization | null>(null)
   const [inputValue, setInputValue] = useState('')
   const [loading, setLoading] = useState(false)
   const [finalizing, setFinalizing] = useState(false)
@@ -86,14 +91,16 @@ export default function InvoiceChatPage() {
   const initSession = async () => {
     try {
       setLoading(true)
-      const [created, clientsList] = await Promise.all([
+      const [created, clientsList, orgData] = await Promise.all([
         chatService.createSession(),
         clientService.listClients().catch(() => []),
+        organizationService.getOrganization().catch(() => null),
       ])
       setSession(created)
       setMessages(created.messages)
       setExtracted(created.extractedData || null)
       setRecentClients(clientsList)
+      if (orgData) setOrg(orgData)
     } catch (err) {
       console.error('Failed to create chat session', err)
     } finally {
@@ -382,6 +389,21 @@ export default function InvoiceChatPage() {
           {/* Scrollable Document Content */}
           <ScrollArea className="flex-1 pr-3 my-3">
             <div className="space-y-4">
+              {/* Emitter Header */}
+              {org && (
+                <div className="p-3 rounded-lg bg-zinc-50/70 dark:bg-zinc-800/30 border border-zinc-200/60 dark:border-zinc-700/40 flex items-center justify-between text-xs">
+                  <div>
+                    <div className="font-bold text-zinc-900 dark:text-white">{org.name}</div>
+                    <div className="text-[10px] text-zinc-400 font-mono">MF: {org.taxId || 'Non spécifié'}</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {org.invoicePrefix || 'FAC'}-BROUILLON
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Client Section */}
               <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-700/40 space-y-2">
                 <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
@@ -557,6 +579,52 @@ export default function InvoiceChatPage() {
                   <span className="font-mono text-base text-emerald-600 dark:text-emerald-400">
                     {(extracted?.total || 0).toFixed(3)} TND
                   </span>
+                </div>
+              </div>
+
+              {/* Cachet & Signature de l'émetteur */}
+              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-end">
+                <div className="text-[10px] text-zinc-400">
+                  Fait à {org?.city || 'Tunis'}, le {new Date().toLocaleDateString('fr-TN')}
+                </div>
+                <div className="text-center p-2.5 border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg min-w-[150px] bg-zinc-50/50 dark:bg-zinc-800/20">
+                  <span className="text-[9px] uppercase font-bold text-zinc-400 block mb-1">
+                    Cachet & Signature
+                  </span>
+                  {((org as any)?.stampImageUrl || org?.stampUrl) &&
+                  ((org as any)?.signatureImageUrl || org?.signatureUrl) ? (
+                    <div className="relative inline-block mx-auto">
+                      <img
+                        src={(org as any)?.stampImageUrl || org?.stampUrl || ''}
+                        alt="Cachet"
+                        className="max-h-14 max-w-[120px] object-contain opacity-95"
+                      />
+                      <img
+                        src={(org as any)?.signatureImageUrl || org?.signatureUrl || ''}
+                        alt="Signature"
+                        className="absolute inset-0 max-h-12 max-w-[110px] object-contain -rotate-6 translate-x-2 translate-y-1 mix-blend-multiply"
+                      />
+                    </div>
+                  ) : (org as any)?.stampImageUrl ||
+                    org?.stampUrl ||
+                    (org as any)?.signatureImageUrl ||
+                    org?.signatureUrl ? (
+                    <img
+                      src={
+                        (org as any)?.stampImageUrl ||
+                        org?.stampUrl ||
+                        (org as any)?.signatureImageUrl ||
+                        org?.signatureUrl ||
+                        ''
+                      }
+                      alt="Cachet & Signature"
+                      className="max-h-14 max-w-[120px] mx-auto object-contain"
+                    />
+                  ) : (
+                    <div className="h-10 flex items-center justify-center text-[9px] text-zinc-400 font-medium">
+                      {org?.name || 'Cachet & Signature'}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

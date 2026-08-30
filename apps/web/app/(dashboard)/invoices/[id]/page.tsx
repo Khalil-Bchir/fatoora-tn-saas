@@ -510,22 +510,32 @@ export default function InvoiceDetailPage({
             <span className="text-[10px] uppercase font-semibold text-zinc-400 block mb-2">
               Cachet & Signature
             </span>
-            {invoice.organization?.stampUrl && invoice.organization?.signatureUrl ? (
+            {((invoice.organization as any)?.stampImageUrl || invoice.organization?.stampUrl) &&
+            ((invoice.organization as any)?.signatureImageUrl || invoice.organization?.signatureUrl) ? (
               <div className="relative inline-block mx-auto">
                 <img
-                  src={invoice.organization.stampUrl}
+                  src={(invoice.organization as any)?.stampImageUrl || invoice.organization?.stampUrl || ''}
                   alt="Cachet"
                   className="max-h-20 max-w-[160px] object-contain opacity-95"
                 />
                 <img
-                  src={invoice.organization.signatureUrl}
+                  src={(invoice.organization as any)?.signatureImageUrl || invoice.organization?.signatureUrl || ''}
                   alt="Signature"
                   className="absolute inset-0 max-h-16 max-w-[150px] object-contain -rotate-6 translate-x-2 translate-y-1 mix-blend-multiply"
                 />
               </div>
-            ) : invoice.organization?.stampUrl || invoice.organization?.signatureUrl ? (
+            ) : (invoice.organization as any)?.stampImageUrl ||
+              invoice.organization?.stampUrl ||
+              (invoice.organization as any)?.signatureImageUrl ||
+              invoice.organization?.signatureUrl ? (
               <img
-                src={invoice.organization.stampUrl || invoice.organization.signatureUrl || ''}
+                src={
+                  (invoice.organization as any)?.stampImageUrl ||
+                  invoice.organization?.stampUrl ||
+                  (invoice.organization as any)?.signatureImageUrl ||
+                  invoice.organization?.signatureUrl ||
+                  ''
+                }
                 alt="Cachet & Signature"
                 className="max-h-20 max-w-[160px] mx-auto object-contain"
               />
