@@ -231,63 +231,66 @@ export default function InvoiceChatPage() {
         {/* Left Column: Chat Conversation & Quick-Reply Chips */}
         <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm flex flex-col h-[650px]">
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin">
-            {messages.map((msg, idx) => {
-              const isUser = msg.role === 'user'
-              return (
-                <div key={idx} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1.5`}>
-                  <div className={`flex gap-2.5 ${isUser ? 'justify-end' : 'justify-start'} max-w-full`}>
-                    {!isUser && (
-                      <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                        <Bot className="w-4 h-4" />
-                      </div>
-                    )}
+          <ScrollArea className="flex-1 pr-3">
+            <div className="space-y-4 pb-2">
+              {messages.map((msg, idx) => {
+                const isUser = msg.role === 'user'
+                return (
+                  <div key={idx} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1.5`}>
+                    <div className={`flex gap-2.5 ${isUser ? 'justify-end' : 'justify-start'} max-w-full`}>
+                      {!isUser && (
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                          <Bot className="w-4 h-4" />
+                        </div>
+                      )}
 
-                    <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
-                        isUser
-                          ? 'bg-emerald-600 text-white rounded-br-none shadow-xs'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-none border border-zinc-200/60 dark:border-zinc-700/60'
-                      }`}
-                    >
-                      <div className="whitespace-pre-wrap">{msg.content}</div>
+                      <div
+                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                          isUser
+                            ? 'bg-emerald-600 text-white rounded-br-none shadow-xs'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-none border border-zinc-200/60 dark:border-zinc-700/60'
+                        }`}
+                      >
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                      </div>
+
+                      {isUser && (
+                        <div className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center shrink-0 mt-0.5">
+                          <User className="w-3.5 h-3.5" />
+                        </div>
+                      )}
                     </div>
 
-                    {isUser && (
-                      <div className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center shrink-0 mt-0.5">
-                        <User className="w-3.5 h-3.5" />
+                    {/* Tappable Quick-Reply Chips under Assistant Bubble */}
+                    {!isUser && msg.quickReplies && msg.quickReplies.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pl-9 pt-1">
+                        {msg.quickReplies.map((qr, qIdx) => (
+                          <button
+                            key={qIdx}
+                            onClick={() => handleSendMessage(qr)}
+                            className="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 hover:border-emerald-400 transition-colors font-medium shadow-2xs"
+                          >
+                            {qr}
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
+                )
+              })}
 
-                  {/* Tappable Quick-Reply Chips under Assistant Bubble */}
-                  {!isUser && msg.quickReplies && msg.quickReplies.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pl-9 pt-1">
-                      {msg.quickReplies.map((qr, qIdx) => (
-                        <button
-                          key={qIdx}
-                          onClick={() => handleSendMessage(qr)}
-                          className="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 hover:border-emerald-400 transition-colors font-medium"
-                        >
-                          {qr}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+              {loading && (
+                <div className="flex gap-2.5 items-center text-zinc-400 text-xs py-2">
+                  <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">
+                    <Bot className="w-4 h-4 animate-bounce" />
+                  </div>
+                  <span className="italic">Traitement fiscal et extraction contextuelle...</span>
                 </div>
-              )
-            })}
-
-            {loading && (
-              <div className="flex gap-2.5 items-center text-zinc-400 text-xs py-2">
-                <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">
-                  <Bot className="w-4 h-4 animate-bounce" />
-                </div>
-                <span className="italic">Traitement fiscal et extraction contextuelle...</span>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+            <ScrollBar orientation="vertical" />
+          </ScrollArea>
 
           {/* Chat Input Bar */}
           <form
