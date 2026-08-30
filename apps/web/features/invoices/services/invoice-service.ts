@@ -98,6 +98,7 @@ export interface Invoice {
     email?: string | null
     bankName?: string | null
     bankRib?: string | null
+    bankBic?: string | null
     stampUrl?: string | null
     signatureUrl?: string | null
     stampImageUrl?: string | null

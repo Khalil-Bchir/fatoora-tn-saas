@@ -8,20 +8,19 @@ import {
   Send,
   Copy,
   Printer,
-  FileCheck2,
   AlertTriangle,
   CheckCircle2,
-  Clock,
-  Building2,
   ExternalLink,
   ShieldCheck,
-  CreditCard,
-  Trash2,
   Ban,
   Files,
   XCircle,
+  Building2,
+  CreditCard,
+  Download,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -147,9 +146,20 @@ export default function InvoiceDetailPage({
     }
   }
 
+  const handlePrint = () => {
+    const originalTitle = document.title
+    if (invoice?.invoiceNumber) {
+      document.title = `Facture_${invoice.invoiceNumber}`
+    }
+    window.print()
+    setTimeout(() => {
+      document.title = originalTitle
+    }, 1000)
+  }
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-28">
+      <div className="flex flex-col items-center justify-center py-28 no-print">
         <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-xs text-zinc-500">Chargement de la facture...</p>
       </div>
@@ -158,7 +168,7 @@ export default function InvoiceDetailPage({
 
   if (!invoice) {
     return (
-      <div className="max-w-2xl mx-auto p-8 text-center">
+      <div className="max-w-2xl mx-auto p-8 text-center no-print">
         <h2 className="text-lg font-bold text-zinc-900 dark:text-white">Facture introuvable</h2>
         <Link href="/invoices" className="text-xs text-emerald-600 underline mt-2 block">
           Retour aux factures
@@ -167,19 +177,24 @@ export default function InvoiceDetailPage({
     )
   }
 
+  const orgStamp =
+    (invoice.organization as any)?.stampImageUrl || invoice.organization?.stampUrl
+  const orgSignature =
+    (invoice.organization as any)?.signatureImageUrl || invoice.organization?.signatureUrl
+
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
-      {/* Top Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Top Action Bar (Hidden during Print / PDF Export) */}
+      <div className="no-print print:hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 shadow-xs">
         <div className="flex items-center gap-3">
           <Link href="/invoices">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl border border-zinc-200 dark:border-zinc-800">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-mono font-bold text-zinc-900 dark:text-white">
+              <h1 className="text-lg md:text-xl font-mono font-bold text-zinc-900 dark:text-white">
                 {invoice.invoiceNumber}
               </h1>
               {invoice.status === 'PAID' && (
@@ -215,7 +230,7 @@ export default function InvoiceDetailPage({
             <Button
               onClick={handleSend}
               disabled={actionLoading}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 shadow-sm"
+              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 shadow-sm rounded-xl"
             >
               <Send className="w-3.5 h-3.5" />
               Émettre & Partager
@@ -227,7 +242,7 @@ export default function InvoiceDetailPage({
               variant="outline"
               size="sm"
               onClick={() => setShowShareModal(true)}
-              className="gap-1.5 text-xs h-9"
+              className="gap-1.5 text-xs h-9 rounded-xl border-zinc-200 dark:border-zinc-800"
             >
               <Copy className="w-3.5 h-3.5 text-emerald-600" />
               Lien Public
@@ -235,10 +250,10 @@ export default function InvoiceDetailPage({
           )}
 
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
-            onClick={() => window.print()}
-            className="gap-1.5 text-xs h-9"
+            onClick={handlePrint}
+            className="gap-1.5 text-xs h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             Imprimer / PDF
@@ -249,7 +264,7 @@ export default function InvoiceDetailPage({
             size="sm"
             onClick={handleDuplicate}
             disabled={actionLoading}
-            className="gap-1.5 text-xs h-9"
+            className="gap-1.5 text-xs h-9 rounded-xl border-zinc-200 dark:border-zinc-800"
           >
             <Files className="w-3.5 h-3.5" />
             Dupliquer
@@ -261,7 +276,7 @@ export default function InvoiceDetailPage({
               size="sm"
               onClick={handleCancel}
               disabled={actionLoading}
-              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 h-9"
+              className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 h-9 rounded-xl"
             >
               <Ban className="w-3.5 h-3.5 mr-1" />
               Annuler
@@ -270,9 +285,9 @@ export default function InvoiceDetailPage({
         </div>
       </div>
 
-      {/* Payment Proofs Review Queue Banner if any pending */}
+      {/* Payment Proofs Review Queue Banner if any pending (Hidden in Print) */}
       {invoice.paymentProofs && invoice.paymentProofs.length > 0 && (
-        <div className="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl p-5 shadow-sm space-y-3">
+        <div className="no-print print:hidden bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-semibold text-sm">
             <ShieldCheck className="w-5 h-5 text-amber-600" />
             Preuve de paiement soumise par le client
@@ -281,7 +296,7 @@ export default function InvoiceDetailPage({
             {invoice.paymentProofs.map((proof) => (
               <div
                 key={proof.id}
-                className="bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-zinc-800 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                className="bg-white dark:bg-zinc-900 border border-amber-200/60 dark:border-zinc-800 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
               >
                 <div>
                   <div className="flex items-center gap-2 text-xs font-semibold text-zinc-900 dark:text-white">
@@ -304,7 +319,7 @@ export default function InvoiceDetailPage({
                   </div>
                   {proof.notes && (
                     <div className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 italic">
-                      Note client : "{proof.notes}"
+                      Note client : &quot;{proof.notes}&quot;
                     </div>
                   )}
                   {proof.status === 'CONFIRMED' && (
@@ -325,7 +340,7 @@ export default function InvoiceDetailPage({
                       size="sm"
                       onClick={() => handleConfirmProof(proof.id)}
                       disabled={actionLoading}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 gap-1.5"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 gap-1.5 rounded-lg"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       Confirmer le paiement
@@ -335,7 +350,7 @@ export default function InvoiceDetailPage({
                       variant="outline"
                       onClick={() => setRejectProofId(proof.id)}
                       disabled={actionLoading}
-                      className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 h-8 gap-1.5"
+                      className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 h-8 gap-1.5 rounded-lg"
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       Rejeter
@@ -348,22 +363,22 @@ export default function InvoiceDetailPage({
         </div>
       )}
 
-      {/* Official Tunisian Invoice Document Preview */}
+      {/* Official Tunisian Invoice Document Sheet (The ONLY container exported to PDF / Print) */}
       <div
         id="invoice-document"
-        className="bg-white text-zinc-900 border border-zinc-200 rounded-xl p-8 md:p-12 shadow-sm space-y-8 print:border-none print:shadow-none print:p-0"
+        className="bg-white text-zinc-900 border border-zinc-200/90 rounded-2xl p-8 md:p-12 shadow-sm space-y-8"
       >
         {/* Document Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start gap-6 border-b border-zinc-200 pb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-6 border-b border-zinc-200 pb-8">
           <div>
-            <h2 className="text-2xl font-bold text-zinc-950">
+            <h2 className="text-2xl font-bold text-zinc-950 tracking-tight">
               {invoice.organization?.name || 'Mon Entreprise'}
             </h2>
             <div className="mt-2 text-xs text-zinc-600 space-y-1">
               {invoice.organization?.taxId && (
                 <p>
                   <strong className="text-zinc-900">Matricule Fiscal :</strong>{' '}
-                  <span className="font-mono">{invoice.organization.taxId}</span>
+                  <span className="font-mono font-medium">{invoice.organization.taxId}</span>
                 </p>
               )}
               {invoice.organization?.address && <p>{invoice.organization.address}</p>}
@@ -372,30 +387,30 @@ export default function InvoiceDetailPage({
             </div>
           </div>
 
-          <div className="text-right">
-            <div className="inline-block px-3 py-1 bg-zinc-100 rounded text-xs font-semibold uppercase tracking-wider text-zinc-800">
+          <div className="text-left sm:text-right">
+            <div className="inline-block px-3 py-1 bg-zinc-100 rounded-md text-xs font-bold uppercase tracking-wider text-zinc-800 border border-zinc-200">
               FACTURE OFFICIELLE
             </div>
-            <h3 className="text-xl font-mono font-bold text-emerald-700 mt-2">
+            <h3 className="text-xl font-mono font-extrabold text-emerald-700 mt-2">
               {invoice.invoiceNumber}
             </h3>
-            <div className="mt-2 text-xs text-zinc-500 space-y-1">
+            <div className="mt-2 text-xs text-zinc-600 space-y-1">
               <p>
-                <strong>Date d'émission :</strong>{' '}
+                <strong>Date d&apos;émission :</strong>{' '}
                 {new Date(invoice.issueDate).toLocaleDateString('fr-TN')}
               </p>
               <p>
-                <strong>Date d'échéance :</strong>{' '}
+                <strong>Date d&apos;échéance :</strong>{' '}
                 {new Date(invoice.dueDate).toLocaleDateString('fr-TN')}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Client Destinataire */}
-        <div className="bg-zinc-50 border border-zinc-200/80 rounded-lg p-5">
-          <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block mb-1">
-            Facturé à (Client)
+        {/* Client Destinataire Card */}
+        <div className="bg-zinc-50 border border-zinc-200/80 rounded-xl p-5">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block mb-1">
+            Facturé à (Client Destinataire)
           </span>
           <h4 className="text-base font-bold text-zinc-900">
             {invoice.client?.companyName || invoice.client?.name}
@@ -403,7 +418,7 @@ export default function InvoiceDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-zinc-600 mt-2">
             {invoice.client?.taxId && (
               <p>
-                <strong>Matricule Fiscal :</strong>{' '}
+                <strong className="text-zinc-800">Matricule Fiscal :</strong>{' '}
                 <span className="font-mono">{invoice.client.taxId}</span>
               </p>
             )}
@@ -417,26 +432,26 @@ export default function InvoiceDetailPage({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b-2 border-zinc-900 text-[11px] uppercase tracking-wider text-zinc-700 font-bold">
-                <th className="py-3 px-2">Désignation des Prestations / Articles</th>
-                <th className="py-3 px-2 text-center">Qté</th>
-                <th className="py-3 px-2 text-right">Prix Unit. HT</th>
-                {invoice.vatApplicable && <th className="py-3 px-2 text-center">TVA</th>}
-                <th className="py-3 px-2 text-right">Total HT</th>
+              <tr className="border-b-2 border-zinc-900 text-[11px] uppercase tracking-wider text-zinc-700 font-bold bg-zinc-50/60">
+                <th className="py-3 px-3">Désignation des Prestations / Articles</th>
+                <th className="py-3 px-3 text-center">Qté</th>
+                <th className="py-3 px-3 text-right">Prix Unit. HT</th>
+                {invoice.vatApplicable && <th className="py-3 px-3 text-center">TVA</th>}
+                <th className="py-3 px-3 text-right">Total HT</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200">
               {invoice.items.map((item, idx) => (
-                <tr key={idx}>
-                  <td className="py-3.5 px-2 font-medium text-zinc-900">{item.description}</td>
-                  <td className="py-3.5 px-2 text-center text-zinc-600">{item.quantity}</td>
-                  <td className="py-3.5 px-2 text-right font-mono text-zinc-700">
+                <tr key={idx} className="hover:bg-zinc-50/40">
+                  <td className="py-3.5 px-3 font-medium text-zinc-900">{item.description}</td>
+                  <td className="py-3.5 px-3 text-center text-zinc-600 font-mono">{item.quantity}</td>
+                  <td className="py-3.5 px-3 text-right font-mono text-zinc-700">
                     {item.unitPrice.toFixed(3)} {invoice.currency}
                   </td>
                   {invoice.vatApplicable && (
-                    <td className="py-3.5 px-2 text-center text-zinc-600">{item.vatRate}%</td>
+                    <td className="py-3.5 px-3 text-center text-zinc-600 font-mono">{item.vatRate}%</td>
                   )}
-                  <td className="py-3.5 px-2 text-right font-mono font-semibold text-zinc-900">
+                  <td className="py-3.5 px-3 text-right font-mono font-bold text-zinc-900">
                     {(item.quantity * item.unitPrice).toFixed(3)} {invoice.currency}
                   </td>
                 </tr>
@@ -445,12 +460,12 @@ export default function InvoiceDetailPage({
           </table>
         </div>
 
-        {/* Financial Recap & Stamps */}
+        {/* Financial Recap & Bank Details */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 border-t border-zinc-200 pt-6">
-          {/* Terms & Notes */}
-          <div className="md:col-span-7 space-y-3">
+          {/* Terms, Notes & Bank Coordinates */}
+          <div className="md:col-span-7 space-y-4">
             {invoice.paymentTerms && (
-              <div className="text-xs text-zinc-600">
+              <div className="text-xs text-zinc-700">
                 <strong>Conditions de paiement :</strong> {invoice.paymentTerms}
               </div>
             )}
@@ -460,20 +475,42 @@ export default function InvoiceDetailPage({
                 <strong>Notes :</strong> {invoice.notes}
               </div>
             )}
+
+            {/* Bank Coordinates Box for Wire Transfer */}
+            {invoice.organization?.bankRib && (
+              <div className="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80 text-xs space-y-1 max-w-md">
+                <span className="text-[10px] uppercase font-bold text-zinc-400 block">
+                  Coordonnées Bancaires (Virement)
+                </span>
+                {invoice.organization.bankName && (
+                  <p className="font-semibold text-zinc-800">
+                    Banque : {invoice.organization.bankName}
+                  </p>
+                )}
+                <p className="font-mono text-zinc-700 text-[11px]">
+                  RIB : <strong>{invoice.organization.bankRib}</strong>
+                </p>
+                {invoice.organization.bankBic && (
+                  <p className="font-mono text-zinc-500 text-[10px]">
+                    BIC / SWIFT : {invoice.organization.bankBic}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Totals Table */}
+          {/* Totals Calculation Table */}
           <div className="md:col-span-5 space-y-2 text-xs">
             <div className="flex justify-between py-1.5 border-b border-zinc-100 text-zinc-600">
               <span>Total Brut Hors Taxe (HT) :</span>
-              <span className="font-mono font-medium">
+              <span className="font-mono font-medium text-zinc-900">
                 {invoice.subtotal.toFixed(3)} {invoice.currency}
               </span>
             </div>
             {invoice.vatApplicable && (
               <div className="flex justify-between py-1.5 border-b border-zinc-100 text-zinc-600">
                 <span>Total TVA :</span>
-                <span className="font-mono font-medium">
+                <span className="font-mono font-medium text-zinc-900">
                   {invoice.vatAmount.toFixed(3)} {invoice.currency}
                 </span>
               </div>
@@ -481,61 +518,51 @@ export default function InvoiceDetailPage({
             {invoice.vatApplicable && invoice.timbreFiscalAmount > 0 && (
               <div className="flex justify-between py-1.5 border-b border-zinc-100 text-zinc-600">
                 <span>Droit de Timbre Fiscal :</span>
-                <span className="font-mono font-medium">
+                <span className="font-mono font-medium text-zinc-900">
                   {invoice.timbreFiscalAmount.toFixed(3)} {invoice.currency}
                 </span>
               </div>
             )}
             <div className="flex justify-between py-3 border-t-2 border-zinc-900 text-sm font-bold text-zinc-950">
-              <span>TOTAL FACTURE (HT = TTC) :</span>
-              <span className="font-mono text-base text-emerald-700">
+              <span>TOTAL NET TTC :</span>
+              <span className="font-mono text-base font-extrabold text-emerald-700">
                 {invoice.total.toFixed(3)} {invoice.currency}
               </span>
             </div>
 
-            {/* Montant en toutes lettres */}
-            <div className="pt-2 text-[11px] text-zinc-700 bg-zinc-50 p-2.5 rounded border border-zinc-200">
-              <strong>Montant en lettres :</strong>{' '}
-              <span className="italic">{numberToTunisianDinars(invoice.total)} ({invoice.total.toFixed(3)} {invoice.currency}).</span>
+            {/* Montant en toutes lettres (Tunisian Requirement) */}
+            <div className="pt-2 text-[11px] text-zinc-800 bg-zinc-50 p-3 rounded-lg border border-zinc-200 leading-relaxed">
+              <strong>Arrêté la présente facture à la somme de :</strong>{' '}
+              <span className="italic font-medium">{numberToTunisianDinars(invoice.total)} ({invoice.total.toFixed(3)} {invoice.currency}).</span>
             </div>
           </div>
         </div>
 
-        {/* Cachet & Signature */}
-        <div className="border-t border-zinc-200 pt-6 flex justify-between items-end">
+        {/* Cachet & Signature Footer Section */}
+        <div className="border-t border-zinc-200 pt-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div className="text-[10px] text-zinc-400">
-            Document généré électroniquement via Fatoora Hub Tunisie.
+            Document certifié et émis via Fatoora Hub Tunisie conforme aux normes fiscales.
           </div>
-          <div className="text-center p-4 border border-dashed border-zinc-300 rounded-lg min-w-[200px]">
-            <span className="text-[10px] uppercase font-semibold text-zinc-400 block mb-2">
+          <div className="text-center p-4 border border-dashed border-zinc-300 rounded-xl min-w-[200px] bg-zinc-50/50">
+            <span className="text-[10px] uppercase font-bold text-zinc-400 block mb-2">
               Cachet & Signature
             </span>
-            {((invoice.organization as any)?.stampImageUrl || invoice.organization?.stampUrl) &&
-            ((invoice.organization as any)?.signatureImageUrl || invoice.organization?.signatureUrl) ? (
+            {orgStamp && orgSignature ? (
               <div className="relative inline-block mx-auto">
                 <img
-                  src={(invoice.organization as any)?.stampImageUrl || invoice.organization?.stampUrl || ''}
+                  src={orgStamp}
                   alt="Cachet"
                   className="max-h-20 max-w-[160px] object-contain opacity-95"
                 />
                 <img
-                  src={(invoice.organization as any)?.signatureImageUrl || invoice.organization?.signatureUrl || ''}
+                  src={orgSignature}
                   alt="Signature"
                   className="absolute inset-0 max-h-16 max-w-[150px] object-contain -rotate-6 translate-x-2 translate-y-1 mix-blend-multiply"
                 />
               </div>
-            ) : (invoice.organization as any)?.stampImageUrl ||
-              invoice.organization?.stampUrl ||
-              (invoice.organization as any)?.signatureImageUrl ||
-              invoice.organization?.signatureUrl ? (
+            ) : orgStamp || orgSignature ? (
               <img
-                src={
-                  (invoice.organization as any)?.stampImageUrl ||
-                  invoice.organization?.stampUrl ||
-                  (invoice.organization as any)?.signatureImageUrl ||
-                  invoice.organization?.signatureUrl ||
-                  ''
-                }
+                src={orgStamp || orgSignature || ''}
                 alt="Cachet & Signature"
                 className="max-h-20 max-w-[160px] mx-auto object-contain"
               />
@@ -549,16 +576,16 @@ export default function InvoiceDetailPage({
         </div>
       </div>
 
-      {/* Share Modal Dialog */}
+      {/* Share Modal Dialog (Hidden during Print) */}
       <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md no-print">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-emerald-600" />
               Lien Public Sécurisé
             </DialogTitle>
             <DialogDescription>
-              Transmettez ce lien à votre client pour qu'il consulte sa facture et dépose son reçu
+              Transmettez ce lien à votre client pour qu&apos;il consulte sa facture et dépose son reçu
               de virement.
             </DialogDescription>
           </DialogHeader>
@@ -581,9 +608,9 @@ export default function InvoiceDetailPage({
         </DialogContent>
       </Dialog>
 
-      {/* Reject Payment Proof Dialog */}
+      {/* Reject Payment Proof Dialog (Hidden during Print) */}
       <Dialog open={!!rejectProofId} onOpenChange={(open) => !open && setRejectProofId(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md no-print">
           <DialogHeader>
             <DialogTitle className="text-red-600 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
