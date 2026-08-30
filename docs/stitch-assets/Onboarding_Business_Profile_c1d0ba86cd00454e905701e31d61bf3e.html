@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fatoora AI - Onboarding Step 2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#93000a",
+                    "on-primary-container": "#799dd6",
+                    "on-surface": "#0d1c2e",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#f8f9ff",
+                    "on-background": "#0d1c2e",
+                    "error-container": "#ffdad6",
+                    "tertiary-fixed": "#ffdfa0",
+                    "outline": "#737780",
+                    "secondary": "#006d43",
+                    "on-tertiary-fixed": "#261a00",
+                    "on-primary-fixed": "#001b3c",
+                    "on-secondary-container": "#007147",
+                    "secondary-fixed": "#78fbb6",
+                    "primary-container": "#003366",
+                    "on-surface-variant": "#43474f",
+                    "secondary-fixed-dim": "#59de9b",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "primary": "#001e40",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#d5e3ff",
+                    "surface-tint": "#3a5f94",
+                    "inverse-surface": "#233144",
+                    "outline-variant": "#c3c6d1",
+                    "tertiary-fixed-dim": "#fbbc00",
+                    "on-secondary-fixed-variant": "#005232",
+                    "surface-variant": "#d5e3fc",
+                    "surface-dim": "#ccdbf3",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface-container-low": "#eff4ff",
+                    "surface-container": "#e6eeff",
+                    "tertiary": "#291c00",
+                    "secondary-container": "#75f8b3",
+                    "surface-container-highest": "#d5e3fc",
+                    "primary-fixed-dim": "#a7c8ff",
+                    "background": "#f8f9ff",
+                    "on-secondary-fixed": "#002111",
+                    "inverse-primary": "#a7c8ff",
+                    "on-tertiary-fixed-variant": "#5c4300",
+                    "surface-container-high": "#dce9ff",
+                    "on-tertiary-container": "#c59300",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-container": "#433000",
+                    "on-primary": "#ffffff",
+                    "surface": "#f8f9ff",
+                    "on-primary-fixed-variant": "#1f477b"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "xl": "32px",
+                    "3xl": "64px",
+                    "container-max": "1440px",
+                    "2xl": "48px",
+                    "gutter": "24px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "headline-sm": [
+                            "Inter"
+                    ],
+                    "display-lg": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Inter"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "data-mono": [
+                            "JetBrains Mono"
+                    ]
+            },
+            "fontSize": {
+                    "headline-sm": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-sm": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-md": [
+                            "30px",
+                            {
+                                    "lineHeight": "38px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "data-mono": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "500"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #F1F5F9; /* Level 0 Background */
+        }
+        .level-1-card {
+            background-color: #ffffff;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        }
+        /* Hide spinner for number input */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md text-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top App Bar (Simplified for Onboarding) -->
+<header class="w-full h-16 bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between px-lg z-10 sticky top-0">
+<div class="flex items-center gap-sm">
+<span class="font-headline-md text-headline-md font-black text-primary">Fatoora AI</span>
+</div>
+<div class="flex items-center gap-md">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Need help?</span>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">help</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col items-center justify-center py-2xl px-md sm:px-lg">
+<!-- Onboarding Container -->
+<div class="w-full max-w-[640px] flex flex-col gap-xl">
+<!-- Progress Section -->
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between items-end">
+<h1 class="font-headline-sm text-headline-sm text-primary">Business Profile</h1>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Step 2 of 4</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style="width: 50%;"></div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-sm">Tell us about your business to ensure tax compliance in Tunisia.</p>
+</div>
+<!-- Form Card -->
+<div class="level-1-card rounded-xl p-lg sm:p-2xl flex flex-col gap-xl">
+<form class="flex flex-col gap-lg">
+<!-- Business Name -->
+<div class="flex flex-col gap-xs">
+<label class="font-body-sm text-body-sm font-medium text-on-surface" for="businessName">Legal Business Name <span class="text-error">*</span></label>
+<input class="w-full h-10 px-md rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface placeholder:text-outline focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-body-md text-body-md" id="businessName" placeholder="e.g., Fatoora Solutions SARL" required="" type="text"/>
+</div>
+<!-- Activity Type & Tax Regime Group -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+<!-- Activity Type -->
+<div class="flex flex-col gap-xs">
+<label class="font-body-sm text-body-sm font-medium text-on-surface" for="activityType">Activity Type <span class="text-error">*</span></label>
+<div class="relative">
+<select class="w-full h-10 pl-md pr-xl rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface appearance-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-body-md text-body-md" id="activityType" required="">
+<option disabled="" selected="" value="">Select activity</option>
+<option value="services">Services / Consulting</option>
+<option value="commerce">Commerce / Retail</option>
+<option value="industry">Industry / Manufacturing</option>
+<option value="agriculture">Agriculture</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center pr-sm pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Tax Regime -->
+<div class="flex flex-col gap-xs">
+<label class="font-body-sm text-body-sm font-medium text-on-surface" for="taxRegime">Tax Regime <span class="text-error">*</span></label>
+<div class="relative">
+<select class="w-full h-10 pl-md pr-xl rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface appearance-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-body-md text-body-md" id="taxRegime" required="">
+<option disabled="" selected="" value="">Select regime</option>
+<option value="auto">Auto-entrepreneur</option>
+<option value="forfaitaire">Forfaitaire</option>
+<option value="reel">Réel (Real)</option>
+</select>
+<div class="absolute inset-y-0 right-0 flex items-center pr-sm pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full h-px bg-outline-variant/50 my-sm"></div>
+<!-- Specialized Field: Matricule Fiscal -->
+<div class="flex flex-col gap-xs">
+<label class="font-body-sm text-body-sm font-medium text-on-surface flex items-center justify-between" for="matriculeFiscal">
+<span>Matricule Fiscal (Tax ID) <span class="text-error">*</span></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant font-normal">Format: 1234567/A/M/000</span>
+</label>
+<div class="relative flex items-center">
+<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</div>
+<!-- Using specialized monospace typography as requested -->
+<input class="w-full h-10 pl-[40px] pr-md rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface placeholder:text-outline focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-data-mono text-data-mono uppercase" id="matriculeFiscal" placeholder="1234567/A/M/000" required="" type="text"/>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 text-[12px]">Required for all official invoices generated by Fatoora AI.</p>
+</div>
+<!-- VAT Registered Toggle -->
+<div class="flex items-center justify-between p-md rounded-lg bg-surface-container-low border border-outline-variant/50">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface">Registered for VAT?</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Enable to apply TVA to your invoices.</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" id="vatToggle" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-outline-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<!-- Dynamic VAT Selector (Shown only if VAT is toggled on) -->
+<div class="flex flex-col gap-xs transition-all duration-300 overflow-hidden" id="vatSelectorContainer">
+<label class="font-body-sm text-body-sm font-medium text-on-surface">Default VAT Rate</label>
+<div class="flex p-1 bg-surface-container-low rounded-lg border border-outline-variant/50">
+<label class="flex-1 text-center cursor-pointer">
+<input class="sr-only peer" name="vatRate" type="radio" value="7"/>
+<div class="py-2 rounded-md font-data-mono text-data-mono text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">7%</div>
+</label>
+<label class="flex-1 text-center cursor-pointer">
+<input class="sr-only peer" name="vatRate" type="radio" value="13"/>
+<div class="py-2 rounded-md font-data-mono text-data-mono text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">13%</div>
+</label>
+<label class="flex-1 text-center cursor-pointer">
+<input checked="" class="sr-only peer" name="vatRate" type="radio" value="19"/>
+<div class="py-2 rounded-md font-data-mono text-data-mono text-on-surface-variant peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm transition-all">19%</div>
+</label>
+</div>
+</div>
+</form>
+</div>
+</div>
+</main>
+<!-- Action Footer (Sticky to bottom as per guidelines) -->
+<footer class="w-full bg-surface-container-lowest border-t border-outline-variant p-md flex justify-center sticky bottom-0 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
+<div class="w-full max-w-[640px] flex justify-between items-center">
+<button class="h-10 px-md rounded-lg font-body-sm text-body-sm font-medium text-on-surface-variant hover:bg-surface-variant transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                Back
+            </button>
+<button class="h-10 px-lg rounded-lg bg-primary text-on-primary font-body-sm text-body-sm font-medium hover:bg-primary-container transition-colors flex items-center gap-xs shadow-sm">
+                Continue
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</footer>
+<script>
+        // Simple logic to toggle VAT selector visibility based on checkbox
+        const vatToggle = document.getElementById('vatToggle');
+        const vatSelectorContainer = document.getElementById('vatSelectorContainer');
+
+        vatToggle.addEventListener('change', function() {
+            if (this.checked) {
+                vatSelectorContainer.style.maxHeight = '100px';
+                vatSelectorContainer.style.opacity = '1';
+                vatSelectorContainer.style.marginTop = '0';
+            } else {
+                vatSelectorContainer.style.maxHeight = '0';
+                vatSelectorContainer.style.opacity = '0';
+                vatSelectorContainer.style.marginTop = '-16px'; // Pull it up slightly when hidden
+            }
+        });
+
+        // Basic input formatting for Matricule Fiscal (just visual feedback)
+        const matriculeInput = document.getElementById('matriculeFiscal');
+        matriculeInput.addEventListener('input', function(e) {
+            let val = e.target.value.toUpperCase();
+            e.target.value = val;
+        });
+    </script>
+</body></html>

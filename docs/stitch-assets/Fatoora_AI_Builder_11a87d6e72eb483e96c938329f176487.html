@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Fatoora AI Invoicing Interface</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#799dd6",
+                        "on-surface": "#0d1c2e",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "on-background": "#0d1c2e",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#ffdfa0",
+                        "outline": "#737780",
+                        "secondary": "#006d43",
+                        "on-tertiary-fixed": "#261a00",
+                        "on-primary-fixed": "#001b3c",
+                        "on-secondary-container": "#007147",
+                        "secondary-fixed": "#78fbb6",
+                        "primary-container": "#003366",
+                        "on-surface-variant": "#43474f",
+                        "secondary-fixed-dim": "#59de9b",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "primary": "#001e40",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#d5e3ff",
+                        "surface-tint": "#3a5f94",
+                        "inverse-surface": "#233144",
+                        "outline-variant": "#c3c6d1",
+                        "tertiary-fixed-dim": "#fbbc00",
+                        "on-secondary-fixed-variant": "#005232",
+                        "surface-variant": "#d5e3fc",
+                        "surface-dim": "#ccdbf3",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container": "#e6eeff",
+                        "tertiary": "#291c00",
+                        "secondary-container": "#75f8b3",
+                        "surface-container-highest": "#d5e3fc",
+                        "primary-fixed-dim": "#a7c8ff",
+                        "background": "#f8f9ff",
+                        "on-secondary-fixed": "#002111",
+                        "inverse-primary": "#a7c8ff",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "surface-container-high": "#dce9ff",
+                        "on-tertiary-container": "#c59300",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#433000",
+                        "on-primary": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "on-primary-fixed-variant": "#1f477b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "3xl": "64px",
+                        "container-max": "1440px",
+                        "2xl": "48px",
+                        "gutter": "24px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9ff; }
+        .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid #E2E8F0; }
+        .invoice-preview-card { background: #ffffff; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02); }
+        .chat-bubble-ai { background-color: #eff4ff; color: #0d1c2e; border-radius: 12px 12px 12px 2px; padding: 16px; margin-bottom: 12px; }
+        .chat-bubble-user { background-color: #001e40; color: #ffffff; border-radius: 12px 12px 2px 12px; padding: 16px; margin-bottom: 12px; align-self: flex-end; }
+        .grid-bg { background-size: 40px 40px; background-image: linear-gradient(to right, #eff4ff 1px, transparent 1px), linear-gradient(to bottom, #eff4ff 1px, transparent 1px); }
+    </style>
+</head>
+<body class="text-on-surface bg-surface flex h-screen overflow-hidden">
+<!-- Top Navigation (Mobile Only via JSON intent logic) - Suppressed for focus layout on desktop -->
+<!-- Main Content Area - Split Screen -->
+<main class="flex w-full h-full">
+<!-- Left Column: AI Chat Interface (glassmorphism/elevated) -->
+<section class="w-full md:w-5/12 h-full flex flex-col glass-panel shadow-lg z-10 border-r border-outline-variant">
+<!-- Chat Header -->
+<header class="flex items-center justify-between p-lg border-b border-outline-variant bg-surface/50">
+<div class="flex items-center space-x-md">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Fatoora AI</h2>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Invoice Assistant</p>
+</div>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<!-- Chat History Area -->
+<div class="flex-1 overflow-y-auto p-lg flex flex-col space-y-md">
+<!-- Date divider -->
+<div class="text-center font-label-caps text-label-caps text-outline my-sm">Today, 10:42 AM</div>
+<!-- AI Message 1 -->
+<div class="chat-bubble-ai shadow-sm max-w-[90%]">
+<p class="font-body-md text-body-md">Hello! Ready to draft a new invoice. Who are we billing today?</p>
+</div>
+<!-- User Message 1 -->
+<div class="chat-bubble-user shadow-sm max-w-[90%] ml-auto">
+<p class="font-body-md text-body-md">Let's create an invoice for Modern Retail Sarl. Add 3 hours of consulting, server maintenance, and a software license renewal.</p>
+</div>
+<!-- AI Message 2 (Target context) -->
+<div class="chat-bubble-ai shadow-sm max-w-[90%] border-l-4 border-secondary-container">
+<p class="font-body-md text-body-md font-medium mb-sm text-primary">Drafting Invoice for Modern Retail Sarl...</p>
+<p class="font-body-md text-body-md text-on-surface-variant">I've added the 3 line items for "Modern Retail Sarl".</p>
+<div class="mt-md p-md bg-surface rounded-md border border-outline-variant">
+<p class="font-body-md text-body-md font-semibold mb-2">Question:</p>
+<p class="font-body-md text-body-md">Should I apply the standard 19% VAT rate, or is this a tax-exempt export?</p>
+<!-- Quick Actions -->
+<div class="flex flex-wrap gap-sm mt-md">
+<button class="px-md py-sm bg-primary text-on-primary font-body-sm text-body-sm rounded-full hover:bg-primary/90 transition-colors shadow-sm">
+                                Apply 19% VAT
+                            </button>
+<button class="px-md py-sm border border-primary text-primary font-body-sm text-body-sm rounded-full hover:bg-surface-variant transition-colors">
+                                Tax-Exempt Export
+                            </button>
+</div>
+</div>
+</div>
+<!-- Typing indicator -->
+<div class="flex items-center space-x-2 p-md opacity-50">
+<div class="w-2 h-2 rounded-full bg-primary animate-bounce"></div>
+<div class="w-2 h-2 rounded-full bg-primary animate-bounce" style="animation-delay: 0.2s"></div>
+<div class="w-2 h-2 rounded-full bg-primary animate-bounce" style="animation-delay: 0.4s"></div>
+</div>
+</div>
+<!-- Chat Input Area -->
+<div class="p-lg bg-surface border-t border-outline-variant">
+<div class="relative flex items-center">
+<button class="absolute left-md text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<input class="w-full pl-3xl pr-xl py-md bg-surface-container-low border border-outline-variant rounded-full font-body-md text-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:text-outline" placeholder="Type a message or command..." type="text"/>
+<button class="absolute right-md w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary hover:scale-105 transition-transform shadow-md">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+<div class="mt-sm text-center">
+<span class="font-label-caps text-label-caps text-outline">Press Enter to send or use / commands</span>
+</div>
+</div>
+</section>
+<!-- Right Column: Live Invoice Preview -->
+<section class="hidden md:flex flex-1 h-full bg-background grid-bg relative p-lg overflow-y-auto justify-center items-start">
+<!-- Sticky Preview Header -->
+<div class="absolute top-lg right-lg flex space-x-md z-20">
+<span class="px-md py-xs bg-surface-variant text-on-surface font-label-caps text-label-caps rounded-full flex items-center shadow-sm border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-secondary-container mr-sm animate-pulse"></span>
+                    Live Preview
+                </span>
+<button class="px-md py-sm bg-primary text-on-primary font-body-sm text-body-sm rounded-md shadow-sm hover:bg-primary/90 transition-colors">
+                    Save Draft
+                </button>
+</div>
+<!-- The Invoice Paper -->
+<div class="invoice-preview-card w-full max-w-[800px] mt-xl p-3xl rounded-xl relative">
+<!-- Invoice Header -->
+<div class="flex justify-between items-start mb-2xl pb-lg border-b border-outline-variant">
+<div>
+<h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">INVOICE</h1>
+<p class="font-data-mono text-data-mono text-on-surface-variant mt-sm">INV-2023-089 <span class="bg-surface-container text-on-surface px-2 py-1 rounded ml-2 font-label-caps text-label-caps">DRAFT</span></p>
+</div>
+<div class="text-right">
+<div class="font-headline-sm text-headline-sm font-bold text-on-surface">Fatoora Tech Solutions</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">123 Tech Boulevard, Tunis, Tunisia</p>
+<p class="font-data-mono text-data-mono text-on-surface-variant mt-1">MF: 1234567/A/M/000</p>
+</div>
+</div>
+<!-- Client Details -->
+<div class="flex justify-between mb-2xl">
+<div class="w-1/2 pr-lg">
+<p class="font-label-caps text-label-caps text-outline mb-sm">BILLED TO</p>
+<p class="font-body-lg text-body-lg font-semibold text-on-surface">Modern Retail Sarl</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">45 Commerce Avenue<br/>Les Berges du Lac, Tunis 1053</p>
+<p class="font-data-mono text-data-mono text-on-surface-variant mt-2 text-sm">MF: 9876543/B/A/111</p>
+</div>
+<div class="w-1/2 pl-lg border-l border-outline-variant flex flex-col space-y-md">
+<div class="flex justify-between">
+<span class="font-label-caps text-label-caps text-outline">DATE OF ISSUE</span>
+<span class="font-data-mono text-data-mono text-on-surface">Oct 24, 2023</span>
+</div>
+<div class="flex justify-between">
+<span class="font-label-caps text-label-caps text-outline">DUE DATE</span>
+<span class="font-data-mono text-data-mono text-on-surface">Nov 23, 2023</span>
+</div>
+</div>
+</div>
+<!-- Line Items Table -->
+<table class="w-full mb-2xl text-left border-collapse">
+<thead>
+<tr class="border-b-2 border-outline-variant">
+<th class="py-sm font-label-caps text-label-caps text-outline w-1/2">DESCRIPTION</th>
+<th class="py-sm font-label-caps text-label-caps text-outline text-right">QTY</th>
+<th class="py-sm font-label-caps text-label-caps text-outline text-right">RATE (TND)</th>
+<th class="py-sm font-label-caps text-label-caps text-outline text-right">AMOUNT (TND)</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm text-on-surface">
+<tr class="border-b border-outline-variant hover:bg-surface-bright transition-colors">
+<td class="py-md">
+<p class="font-medium text-on-surface">IT Consulting Services</p>
+<p class="text-on-surface-variant text-xs mt-1">Strategy session and architecture review</p>
+</td>
+<td class="py-md text-right font-data-mono text-data-mono">3</td>
+<td class="py-md text-right font-data-mono text-data-mono">150.00</td>
+<td class="py-md text-right font-data-mono text-data-mono">450.00</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-bright transition-colors">
+<td class="py-md">
+<p class="font-medium text-on-surface">Server Maintenance</p>
+<p class="text-on-surface-variant text-xs mt-1">Monthly recurring maintenance fee</p>
+</td>
+<td class="py-md text-right font-data-mono text-data-mono">1</td>
+<td class="py-md text-right font-data-mono text-data-mono">300.00</td>
+<td class="py-md text-right font-data-mono text-data-mono">300.00</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-bright transition-colors">
+<td class="py-md">
+<p class="font-medium text-on-surface">Software License Renewal</p>
+<p class="text-on-surface-variant text-xs mt-1">Annual subscription for internal tools</p>
+</td>
+<td class="py-md text-right font-data-mono text-data-mono">1</td>
+<td class="py-md text-right font-data-mono text-data-mono">850.00</td>
+<td class="py-md text-right font-data-mono text-data-mono">850.00</td>
+</tr>
+</tbody>
+</table>
+<!-- Totals Section (Highlighting VAT requirement) -->
+<div class="flex justify-end">
+<div class="w-1/2 max-w-[320px]">
+<div class="flex justify-between py-sm border-b border-outline-variant">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Subtotal</span>
+<span class="font-data-mono text-data-mono text-on-surface">1,600.00 TND</span>
+</div>
+<!-- VAT Area - Flashing/Highlighted to indicate waiting for AI input -->
+<div class="flex justify-between py-sm border-b border-outline-variant bg-tertiary-fixed/20 -mx-sm px-sm rounded animate-pulse">
+<div class="flex items-center space-x-2">
+<span class="font-body-sm text-body-sm text-on-tertiary-container font-semibold">VAT Rate</span>
+<span class="material-symbols-outlined text-sm text-on-tertiary-container">help</span>
+</div>
+<span class="font-data-mono text-data-mono text-on-tertiary-container font-semibold">PENDING</span>
+</div>
+<!-- Stamp Duty (Timbre Fiscal) - Standard in Tunisia -->
+<div class="flex justify-between py-sm border-b border-outline-variant">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Stamp Duty (Timbre Fiscal)</span>
+<span class="font-data-mono text-data-mono text-on-surface">1.000 TND</span>
+</div>
+<div class="flex justify-between py-md mt-sm bg-surface-container-low px-md rounded-lg">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">Total</span>
+<span class="font-data-mono text-data-mono font-bold text-primary text-xl">-- TND</span>
+</div>
+</div>
+</div>
+<!-- Footer Note -->
+<div class="mt-3xl pt-lg border-t border-outline-variant">
+<p class="font-label-caps text-label-caps text-outline mb-sm">NOTES</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Payment is due within 30 days. Please include the invoice number in your transfer reference.</p>
+</div>
+<!-- Decorative blur overlay to indicate 'drafting' state slightly -->
+<div class="absolute inset-0 pointer-events-none rounded-xl border border-primary/10 shadow-[inset_0_0_20px_rgba(0,30,64,0.03)]"></div>
+</div>
+</section>
+</main>
+</body></html>

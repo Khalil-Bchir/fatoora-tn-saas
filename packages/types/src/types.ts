@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -47,6 +47,427 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_sessions: {
+        Row: {
+          createdAt: string
+          draftInvoice: Json | null
+          id: string
+          messages: Json
+          organizationId: string
+          status: string
+          title: string
+          updatedAt: string
+          userId: string
+        }
+        Insert: {
+          createdAt?: string
+          draftInvoice?: Json | null
+          id: string
+          messages?: Json
+          organizationId: string
+          status?: string
+          title?: string
+          updatedAt: string
+          userId: string
+        }
+        Update: {
+          createdAt?: string
+          draftInvoice?: Json | null
+          id?: string
+          messages?: Json
+          organizationId?: string
+          status?: string
+          title?: string
+          updatedAt?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_organizationId_fkey"
+            columns: ["organizationId"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_sessions_userId_fkey"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          companyName: string | null
+          country: string | null
+          createdAt: string
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          organizationId: string
+          phone: string | null
+          postalCode: string | null
+          taxId: string | null
+          updatedAt: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          companyName?: string | null
+          country?: string | null
+          createdAt?: string
+          email?: string | null
+          id: string
+          name: string
+          notes?: string | null
+          organizationId: string
+          phone?: string | null
+          postalCode?: string | null
+          taxId?: string | null
+          updatedAt: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          companyName?: string | null
+          country?: string | null
+          createdAt?: string
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          organizationId?: string
+          phone?: string | null
+          postalCode?: string | null
+          taxId?: string | null
+          updatedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_organizationId_fkey"
+            columns: ["organizationId"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_items: {
+        Row: {
+          createdAt: string
+          description: string
+          id: string
+          invoiceId: string
+          quantity: number
+          total: number
+          unitPrice: number
+          updatedAt: string
+          vatRate: number
+        }
+        Insert: {
+          createdAt?: string
+          description: string
+          id: string
+          invoiceId: string
+          quantity?: number
+          total?: number
+          unitPrice?: number
+          updatedAt: string
+          vatRate?: number
+        }
+        Update: {
+          createdAt?: string
+          description?: string
+          id?: string
+          invoiceId?: string
+          quantity?: number
+          total?: number
+          unitPrice?: number
+          updatedAt?: string
+          vatRate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoiceId_fkey"
+            columns: ["invoiceId"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          clientId: string
+          createdAt: string
+          currency: string
+          dueDate: string
+          id: string
+          invoiceNumber: string
+          issueDate: string
+          mdContent: string | null
+          notes: string | null
+          organizationId: string
+          paymentTerms: string | null
+          pdfUrl: string | null
+          publicToken: string
+          status: Database["public"]["Enums"]["InvoiceStatus"]
+          subtotal: number
+          timbreFiscalAmount: number
+          total: number
+          updatedAt: string
+          vatAmount: number
+          vatApplicable: boolean
+          vatRate: number
+        }
+        Insert: {
+          clientId: string
+          createdAt?: string
+          currency?: string
+          dueDate: string
+          id: string
+          invoiceNumber: string
+          issueDate?: string
+          mdContent?: string | null
+          notes?: string | null
+          organizationId: string
+          paymentTerms?: string | null
+          pdfUrl?: string | null
+          publicToken: string
+          status?: Database["public"]["Enums"]["InvoiceStatus"]
+          subtotal?: number
+          timbreFiscalAmount?: number
+          total?: number
+          updatedAt: string
+          vatAmount?: number
+          vatApplicable?: boolean
+          vatRate?: number
+        }
+        Update: {
+          clientId?: string
+          createdAt?: string
+          currency?: string
+          dueDate?: string
+          id?: string
+          invoiceNumber?: string
+          issueDate?: string
+          mdContent?: string | null
+          notes?: string | null
+          organizationId?: string
+          paymentTerms?: string | null
+          pdfUrl?: string | null
+          publicToken?: string
+          status?: Database["public"]["Enums"]["InvoiceStatus"]
+          subtotal?: number
+          timbreFiscalAmount?: number
+          total?: number
+          updatedAt?: string
+          vatAmount?: number
+          vatApplicable?: boolean
+          vatRate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_clientId_fkey"
+            columns: ["clientId"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_organizationId_fkey"
+            columns: ["organizationId"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          activityType: string | null
+          address: string | null
+          bankBic: string | null
+          bankIban: string | null
+          bankName: string | null
+          bankRib: string | null
+          city: string | null
+          country: string
+          createdAt: string
+          currency: string
+          defaultPaymentTerms: string | null
+          defaultVatRate: number
+          email: string | null
+          id: string
+          invoiceCounter: number
+          invoicePrefix: string
+          logoUrl: string | null
+          name: string
+          ownerUserId: string | null
+          phone: string | null
+          plan: string
+          postalCode: string | null
+          signatureImageUrl: string | null
+          stampImageUrl: string | null
+          taxId: string | null
+          taxRegime: Database["public"]["Enums"]["TaxRegime"]
+          updatedAt: string
+          vatRegistered: boolean
+          website: string | null
+        }
+        Insert: {
+          activityType?: string | null
+          address?: string | null
+          bankBic?: string | null
+          bankIban?: string | null
+          bankName?: string | null
+          bankRib?: string | null
+          city?: string | null
+          country?: string
+          createdAt?: string
+          currency?: string
+          defaultPaymentTerms?: string | null
+          defaultVatRate?: number
+          email?: string | null
+          id: string
+          invoiceCounter?: number
+          invoicePrefix?: string
+          logoUrl?: string | null
+          name: string
+          ownerUserId?: string | null
+          phone?: string | null
+          plan?: string
+          postalCode?: string | null
+          signatureImageUrl?: string | null
+          stampImageUrl?: string | null
+          taxId?: string | null
+          taxRegime?: Database["public"]["Enums"]["TaxRegime"]
+          updatedAt: string
+          vatRegistered?: boolean
+          website?: string | null
+        }
+        Update: {
+          activityType?: string | null
+          address?: string | null
+          bankBic?: string | null
+          bankIban?: string | null
+          bankName?: string | null
+          bankRib?: string | null
+          city?: string | null
+          country?: string
+          createdAt?: string
+          currency?: string
+          defaultPaymentTerms?: string | null
+          defaultVatRate?: number
+          email?: string | null
+          id?: string
+          invoiceCounter?: number
+          invoicePrefix?: string
+          logoUrl?: string | null
+          name?: string
+          ownerUserId?: string | null
+          phone?: string | null
+          plan?: string
+          postalCode?: string | null
+          signatureImageUrl?: string | null
+          stampImageUrl?: string | null
+          taxId?: string | null
+          taxRegime?: Database["public"]["Enums"]["TaxRegime"]
+          updatedAt?: string
+          vatRegistered?: boolean
+          website?: string | null
+        }
+        Relationships: []
+      }
+      payment_proofs: {
+        Row: {
+          amount: number | null
+          fileUrl: string
+          id: string
+          invoiceId: string
+          notes: string | null
+          organizationId: string
+          reviewedAt: string | null
+          status: Database["public"]["Enums"]["PaymentProofStatus"]
+          submittedAt: string
+        }
+        Insert: {
+          amount?: number | null
+          fileUrl: string
+          id: string
+          invoiceId: string
+          notes?: string | null
+          organizationId: string
+          reviewedAt?: string | null
+          status?: Database["public"]["Enums"]["PaymentProofStatus"]
+          submittedAt?: string
+        }
+        Update: {
+          amount?: number | null
+          fileUrl?: string
+          id?: string
+          invoiceId?: string
+          notes?: string | null
+          organizationId?: string
+          reviewedAt?: string | null
+          status?: Database["public"]["Enums"]["PaymentProofStatus"]
+          submittedAt?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_proofs_invoiceId_fkey"
+            columns: ["invoiceId"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_proofs_organizationId_fkey"
+            columns: ["organizationId"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          company: string | null
+          createdAt: string
+          id: string
+          message: string | null
+          name: string
+          rating: number
+          title: string | null
+          updatedAt: string
+        }
+        Insert: {
+          company?: string | null
+          createdAt?: string
+          id: string
+          message?: string | null
+          name: string
+          rating: number
+          title?: string | null
+          updatedAt: string
+        }
+        Update: {
+          company?: string | null
+          createdAt?: string
+          id?: string
+          message?: string | null
+          name?: string
+          rating?: number
+          title?: string | null
+          updatedAt?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           city: string | null
@@ -55,6 +476,8 @@ export type Database = {
           email: string
           fullName: string | null
           id: string
+          organizationId: string | null
+          passwordHash: string | null
           phone: string | null
           postalCode: string | null
           role: Database["public"]["Enums"]["UserRole"]
@@ -69,6 +492,8 @@ export type Database = {
           email: string
           fullName?: string | null
           id: string
+          organizationId?: string | null
+          passwordHash?: string | null
           phone?: string | null
           postalCode?: string | null
           role?: Database["public"]["Enums"]["UserRole"]
@@ -83,6 +508,8 @@ export type Database = {
           email?: string
           fullName?: string | null
           id?: string
+          organizationId?: string | null
+          passwordHash?: string | null
           phone?: string | null
           postalCode?: string | null
           role?: Database["public"]["Enums"]["UserRole"]
@@ -90,7 +517,15 @@ export type Database = {
           streetAddress?: string | null
           updatedAt?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_organizationId_fkey"
+            columns: ["organizationId"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -100,7 +535,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      UserRole: "USER" | "ADMIN" | "DEMO"
+      InvoiceStatus:
+        | "DRAFT"
+        | "SENT"
+        | "AWAITING_PAYMENT"
+        | "PAYMENT_CLAIMED"
+        | "PAID"
+        | "OVERDUE"
+        | "DISPUTED"
+        | "CANCELLED"
+      PaymentProofStatus: "SUBMITTED" | "CONFIRMED" | "REJECTED"
+      TaxRegime: "AUTO_ENTREPRENEUR" | "FORFAITAIRE" | "REEL"
+      UserRole: "OWNER" | "MEMBER" | "ADMIN" | "USER" | "DEMO"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -228,7 +674,19 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      UserRole: ["USER", "ADMIN", "DEMO"],
+      InvoiceStatus: [
+        "DRAFT",
+        "SENT",
+        "AWAITING_PAYMENT",
+        "PAYMENT_CLAIMED",
+        "PAID",
+        "OVERDUE",
+        "DISPUTED",
+        "CANCELLED",
+      ],
+      PaymentProofStatus: ["SUBMITTED", "CONFIRMED", "REJECTED"],
+      TaxRegime: ["AUTO_ENTREPRENEUR", "FORFAITAIRE", "REEL"],
+      UserRole: ["OWNER", "MEMBER", "ADMIN", "USER", "DEMO"],
     },
   },
 } as const

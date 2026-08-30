@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FiscTunisia - Invoice View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#78fbb6",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#0d1c2e",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-bright": "#f8f9ff",
+                        "secondary-fixed-dim": "#59de9b",
+                        "on-error": "#ffffff",
+                        "outline": "#737780",
+                        "on-tertiary-container": "#c59300",
+                        "tertiary": "#291c00",
+                        "inverse-surface": "#233144",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#007147",
+                        "tertiary-container": "#433000",
+                        "tertiary-fixed-dim": "#fbbc00",
+                        "background": "#f8f9ff",
+                        "secondary-container": "#75f8b3",
+                        "primary-fixed-dim": "#a7c8ff",
+                        "inverse-primary": "#a7c8ff",
+                        "on-tertiary-fixed": "#261a00",
+                        "on-error-container": "#93000a",
+                        "primary": "#001e40",
+                        "on-primary-fixed-variant": "#1f477b",
+                        "on-surface-variant": "#43474f",
+                        "on-background": "#0d1c2e",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "surface": "#f8f9ff",
+                        "surface-variant": "#d5e3fc",
+                        "on-primary-fixed": "#001b3c",
+                        "on-primary-container": "#799dd6",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#d5e3fc",
+                        "secondary": "#006d43",
+                        "surface-container-high": "#dce9ff",
+                        "surface-dim": "#ccdbf3",
+                        "primary-container": "#003366",
+                        "primary-fixed": "#d5e3ff",
+                        "on-secondary-fixed": "#002111",
+                        "tertiary-fixed": "#ffdfa0",
+                        "outline-variant": "#c3c6d1",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#3a5f94",
+                        "on-secondary-fixed-variant": "#005232",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container": "#e6eeff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "32px",
+                        "2xl": "48px",
+                        "xs": "4px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "sm": "8px",
+                        "base": "4px",
+                        "lg": "24px",
+                        "3xl": "64px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "data-mono": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-sm": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .blur-shadow {
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.02);
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white;
+            }
+            .print-border {
+                border: 1px solid #e2e8f0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Minimal Header for External View -->
+<header class="bg-surface border-b border-outline-variant/30 py-md px-lg flex justify-between items-center sticky top-0 z-10 no-print blur-shadow">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="account_balance" data-weight="fill">account_balance</span>
+<span class="font-headline-sm text-headline-sm text-primary">FiscTunisia</span>
+</div>
+<div class="flex gap-sm">
+<button class="flex items-center gap-xs px-md py-sm bg-surface-container-high hover:bg-surface-dim text-primary rounded transition-colors" onclick="window.print()">
+<span class="material-symbols-outlined text-[20px]" data-icon="print">print</span>
+<span class="font-label-caps text-label-caps">Print</span>
+</button>
+<button class="flex items-center gap-xs px-md py-sm bg-primary text-on-primary hover:bg-primary-container rounded transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]" data-icon="download">download</span>
+<span class="font-label-caps text-label-caps">Download PDF</span>
+</button>
+</div>
+</header>
+<main class="flex-grow flex flex-col md:flex-row justify-center gap-xl p-lg max-w-container-max mx-auto w-full">
+<!-- Left Column: Invoice PDF View -->
+<div class="w-full md:w-[70%] max-w-[800px]">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 blur-shadow p-xl sm:p-2xl print-border relative overflow-hidden group">
+<!-- Status Ribbon -->
+<div class="absolute top-6 -right-12 rotate-45 bg-[#ffdfa0] text-[#5c4300] font-label-caps text-label-caps py-sm px-[60px] shadow-sm z-10">
+                    AWAITING PAYMENT
+                </div>
+<!-- Invoice Header -->
+<div class="flex justify-between items-start mb-2xl">
+<div>
+<div class="flex items-center gap-sm mb-lg">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="account_balance" data-weight="fill">account_balance</span>
+<span class="font-headline-md text-headline-md text-primary tracking-tight">TechCorp SARL</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex flex-col gap-1">
+<span>123 Avenue Habib Bourguiba</span>
+<span>Tunis, 1001</span>
+<span>Tunisia</span>
+<span class="mt-sm font-data-mono text-data-mono text-outline">MF: 1234567/A/M/000</span>
+</div>
+</div>
+<div class="text-right">
+<h1 class="font-headline-sm text-headline-sm text-on-surface mb-sm">INVOICE</h1>
+<div class="font-data-mono text-data-mono text-on-surface-variant flex flex-col gap-1">
+<p><span class="text-outline mr-sm font-body-sm">INV#</span> 2023-089</p>
+<p><span class="text-outline mr-sm font-body-sm">Date:</span> Oct 15, 2023</p>
+<p><span class="text-outline mr-sm font-body-sm">Due:</span> <span class="text-error font-medium">Oct 30, 2023</span></p>
+</div>
+</div>
+</div>
+<!-- Billed To -->
+<div class="mb-2xl border-t border-outline-variant/30 pt-lg">
+<h2 class="font-label-caps text-label-caps text-outline mb-md">Billed To</h2>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Global Imports Ltd</p>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex flex-col gap-1 mt-xs">
+<span>45 Rue de la Bourse</span>
+<span>Les Berges du Lac, 1053</span>
+<span>MF: 9876543/B/N/111</span>
+</div>
+</div>
+<!-- Line Items Table -->
+<div class="overflow-x-auto mb-2xl">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b-2 border-surface-variant text-outline font-label-caps text-label-caps">
+<th class="py-sm px-sm font-medium">Description</th>
+<th class="py-sm px-sm font-medium text-right w-24">Qty</th>
+<th class="py-sm px-sm font-medium text-right w-32">Rate (TND)</th>
+<th class="py-sm px-sm font-medium text-right w-32">Amount (TND)</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm">
+<tr class="border-b border-surface-container hover:bg-surface-bright transition-colors group/row">
+<td class="py-md px-sm text-on-surface font-medium">Annual Audit Services (FY 2022)</td>
+<td class="py-md px-sm text-right text-on-surface-variant">1</td>
+<td class="py-md px-sm text-right font-data-mono text-data-mono text-on-surface-variant">2,500.000</td>
+<td class="py-md px-sm text-right font-data-mono text-data-mono text-on-surface">2,500.000</td>
+</tr>
+<tr class="border-b border-surface-container hover:bg-surface-bright transition-colors group/row">
+<td class="py-md px-sm text-on-surface font-medium">Tax Filing Preparation - Q3</td>
+<td class="py-md px-sm text-right text-on-surface-variant">1</td>
+<td class="py-md px-sm text-right font-data-mono text-data-mono text-on-surface-variant">800.000</td>
+<td class="py-md px-sm text-right font-data-mono text-data-mono text-on-surface">800.000</td>
+</tr>
+<tr class="border-b border-surface-container hover:bg-surface-bright transition-colors group/row">
+<td class="py-md px-sm text-on-surface font-medium">Legal Consultation (Hours)</td>
+<td class="py-md px-sm text-right text-on-surface-variant">5</td>
+<td class="py-md px-sm text-right font-data-mono text-data-mono text-on-surface-variant">150.000</td>
+<td class="py-md px-sm text-right font-data-mono text-data-mono text-on-surface">750.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Totals -->
+<div class="flex justify-end mb-2xl">
+<div class="w-full sm:w-1/2 md:w-2/3 lg:w-1/2">
+<div class="flex justify-between py-sm px-sm text-on-surface-variant font-body-sm text-body-sm">
+<span>Subtotal</span>
+<span class="font-data-mono text-data-mono">4,050.000</span>
+</div>
+<div class="flex justify-between py-sm px-sm text-on-surface-variant font-body-sm text-body-sm border-b border-surface-variant">
+<span>VAT (19%)</span>
+<span class="font-data-mono text-data-mono">769.500</span>
+</div>
+<div class="flex justify-between py-md px-sm text-primary font-headline-sm text-headline-sm font-bold bg-surface-container-low mt-sm rounded-lg">
+<span>Total (TND)</span>
+<span class="font-data-mono text-data-mono">4,819.500</span>
+</div>
+</div>
+</div>
+<!-- Footer Note -->
+<div class="border-t border-outline-variant/30 pt-lg text-center">
+<p class="font-label-caps text-label-caps text-outline mb-xs">Thank you for your business</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">For any inquiries regarding this invoice, please contact billing@techcorp.tn</p>
+</div>
+</div>
+</div>
+<!-- Right Column: Payment Actions (Hidden on Print) -->
+<div class="w-full md:w-[30%] min-w-[300px] flex flex-col gap-lg no-print">
+<!-- Bank Transfer Details Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 blur-shadow p-lg relative overflow-hidden">
+<!-- Decorative top border -->
+<div class="absolute top-0 left-0 right-0 h-1 bg-primary"></div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-md flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance_wallet">account_balance_wallet</span>
+                    Payment Details
+                </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md leading-relaxed">
+                    Please transfer the total amount to the following bank account. Include the invoice number <span class="font-data-mono text-data-mono bg-surface-variant px-1 rounded text-on-surface">INV#2023-089</span> in the transfer reference.
+                </p>
+<div class="bg-surface-container-low rounded-lg p-md flex flex-col gap-sm mb-lg border border-surface-container-highest">
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-outline">Bank Name</span>
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Banque de Tunisie (BT)</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-label-caps text-label-caps text-outline">Beneficiary</span>
+<span class="font-body-sm text-body-sm font-medium text-on-surface">TechCorp SARL</span>
+</div>
+<div class="pt-sm border-t border-outline-variant/20">
+<span class="font-label-caps text-label-caps text-outline block mb-xs">RIB (Relevé d'Identité Bancaire)</span>
+<div class="flex items-center justify-between bg-surface p-sm rounded border border-outline-variant/30 group cursor-pointer hover:border-primary transition-colors" onclick="navigator.clipboard.writeText('10 001 1234567890123 45')">
+<span class="font-data-mono text-data-mono text-on-surface tracking-wider text-sm sm:text-base">10 001 1234567890123 45</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]" data-icon="content_copy" title="Copy RIB">content_copy</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Upload Proof of Payment Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/40 blur-shadow p-lg flex flex-col items-center text-center justify-center border-dashed border-2 hover:border-primary transition-colors cursor-pointer group">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center mb-md group-hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary transition-colors" data-icon="upload_file">upload_file</span>
+</div>
+<h4 class="font-body-lg text-body-lg font-medium text-on-surface mb-xs">Upload Payment Proof</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md">Already paid? Upload your transfer receipt to expedite processing.</p>
+<!-- Hidden file input for interaction simulation -->
+<input accept=".pdf,.jpg,.jpeg,.png" class="hidden" id="proof-upload" type="file"/>
+<button class="px-xl py-sm bg-surface-container-high hover:bg-surface-dim text-primary rounded-lg font-label-caps text-label-caps transition-colors border border-outline-variant/30" onclick="document.getElementById('proof-upload').click()">
+                    Browse Files
+                </button>
+</div>
+<!-- Support Area -->
+<div class="mt-auto text-center pt-xl">
+<p class="font-body-sm text-body-sm text-outline flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]" data-icon="help">help</span>
+                    Need help? <a class="text-primary hover:underline" href="#">Contact Support</a>
+</p>
+</div>
+</div>
+</main>
+</body></html>
