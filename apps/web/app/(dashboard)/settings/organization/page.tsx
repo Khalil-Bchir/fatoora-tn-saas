@@ -545,6 +545,63 @@ export default function OrganizationSettingsPage() {
                     hint="Apparaît en haut à gauche de vos factures et devis (PNG / SVG)"
                   />
                 </div>
+
+                {/* Simulated Real Invoice Footer */}
+                <div className="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-700/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      Rendu officiel sur facture PDF & Impression
+                    </span>
+                    <span className="text-[10px] font-mono text-zinc-400">Position : Bas de page droite</span>
+                  </div>
+
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-xs text-zinc-500 space-y-1 text-center sm:text-left">
+                      <p className="font-semibold text-zinc-800 dark:text-zinc-200">
+                        Pour faire valoir ce que de droit
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        Fait à {formData.city || 'Tunis'}, le {new Date().toLocaleDateString('fr-TN')}
+                      </p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold pt-1">
+                        ✓ Document certifié par l&apos;émetteur
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-2 rounded-lg bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:8px_8px] border border-dashed border-zinc-300 dark:border-zinc-700">
+                      {formData.stampUrl ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <img
+                            src={formData.stampUrl}
+                            alt="Cachet"
+                            className="h-16 w-auto object-contain filter drop-shadow-xs"
+                          />
+                          <span className="text-[9px] font-bold text-zinc-400 uppercase">Cachet</span>
+                        </div>
+                      ) : (
+                        <div className="h-16 w-20 border border-dashed border-zinc-300 dark:border-zinc-700 rounded flex items-center justify-center text-[10px] text-zinc-400 font-medium text-center">
+                          Pas de cachet
+                        </div>
+                      )}
+
+                      {formData.signatureUrl ? (
+                        <div className="flex flex-col items-center gap-1">
+                          <img
+                            src={formData.signatureUrl}
+                            alt="Signature"
+                            className="h-16 w-auto object-contain filter drop-shadow-xs"
+                          />
+                          <span className="text-[9px] font-bold text-zinc-400 uppercase">Signature</span>
+                        </div>
+                      ) : (
+                        <div className="h-16 w-20 border border-dashed border-zinc-300 dark:border-zinc-700 rounded flex items-center justify-center text-[10px] text-zinc-400 font-medium text-center">
+                          Pas de signature
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

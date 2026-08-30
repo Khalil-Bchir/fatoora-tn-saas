@@ -5,13 +5,17 @@ import {
   Upload,
   CheckCircle2,
   RefreshCw,
-  X,
+  Trash2,
   FileText,
   ExternalLink,
   ImageIcon,
+  Maximize2,
+  X,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { storageService } from '@/features/storage/services/storage-service'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 interface MediaUploaderProps {
   label: string
@@ -33,12 +37,11 @@ export function MediaUploader({
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [imgLoadError, setImgLoadError] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  const processFile = async (file: File) => {
     try {
       setUploading(true)
       setError(null)
@@ -53,91 +56,145 @@ export function MediaUploader({
     }
   }
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) await processFile(file)
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) await processFile(file)
+  }
+
   const isPdf = value?.toLowerCase().endsWith('.pdf')
+  const fileName = value?.split('/').pop() || 'media'
+  const fileExtension = fileName.split('.').pop()?.toUpperCase() || 'IMG'
 
   return (
-    <div className="space-y-2">
-      <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block">
-        {label}
-      </label>
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+          {label}
+        </label>
+        {value && (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Connecté au Cloud
+          </span>
+        )}
+      </div>
 
       {value ? (
-        <div className="relative group border border-zinc-200 dark:border-zinc-700 rounded-xl p-3.5 bg-zinc-50/70 dark:bg-zinc-800/40 flex items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-3 overflow-hidden">
-            {isPdf ? (
-              <div className="w-14 h-14 rounded-lg bg-red-100 dark:bg-red-950/50 text-red-600 flex items-center justify-center shrink-0">
-                <FileText className="w-6 h-6" />
-              </div>
-            ) : imgLoadError ? (
-              <div className="w-14 h-14 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200 dark:border-amber-800">
-                <ImageIcon className="w-6 h-6" />
-              </div>
-            ) : (
-              <div className="w-14 h-14 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-1 flex items-center justify-center shrink-0 overflow-hidden">
-                <img
-                  src={value}
-                  alt={label}
-                  onError={() => setImgLoadError(true)}
-                  className="max-w-full max-h-full object-contain"
-                />
-              </div>
-            )}
+        <div className="relative group border border-zinc-200 dark:border-zinc-700/80 rounded-2xl p-4 bg-white dark:bg-zinc-900 shadow-xs hover:border-emerald-500/60 dark:hover:border-emerald-500/60 transition-all">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            {/* High Quality Checkerboard Transparency Preview Box */}
+            <div className="relative w-full sm:w-28 h-28 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden shrink-0 flex items-center justify-center bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:8px_8px] bg-zinc-50 dark:bg-zinc-950">
+              {isPdf ? (
+                <div className="flex flex-col items-center justify-center gap-1 text-red-600">
+                  <FileText className="w-9 h-9" />
+                  <span className="text-[9px] font-bold uppercase">Document PDF</span>
+                </div>
+              ) : imgLoadError ? (
+                <div className="flex flex-col items-center justify-center gap-1 text-amber-600">
+                  <ImageIcon className="w-7 h-7" />
+                  <span className="text-[9px] font-bold">Image indisponible</span>
+                </div>
+              ) : (
+                <div className="relative w-full h-full p-2 flex items-center justify-center group/preview">
+                  <img
+                    src={value}
+                    alt={label}
+                    onError={() => setImgLoadError(true)}
+                    className="max-w-full max-h-full object-contain filter drop-shadow-xs transition-transform duration-200 group-hover/preview:scale-105"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center text-white rounded-xl"
+                  >
+                    <Maximize2 className="w-5 h-5 drop-shadow-md" />
+                  </button>
+                </div>
+              )}
 
-            <div className="overflow-hidden text-xs space-y-0.5">
-              <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span>Fichier hébergé (Supabase)</span>
+              {/* Format Badge */}
+              <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-zinc-900/80 text-[9px] font-mono font-bold text-white uppercase backdrop-blur-xs">
+                {fileExtension}
               </div>
-              <p className="text-[11px] text-zinc-400 font-mono truncate max-w-[200px]">
-                {value.split('/').pop()}
-              </p>
-              <a
-                href={value}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-medium pt-0.5"
-              >
-                <ExternalLink className="w-2.5 h-2.5" />
-                Voir le fichier source
-              </a>
+            </div>
+
+            {/* Info & Quick Actions */}
+            <div className="flex-1 space-y-2">
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-zinc-900 dark:text-white font-bold text-xs">
+                  <span>{label}</span>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-mono break-all line-clamp-1">
+                  {fileName}
+                </p>
+                <div className="flex items-center gap-2 pt-0.5">
+                  <a
+                    href={value}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Ouvrir en plein écran
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-8 text-xs font-semibold text-zinc-700 dark:text-zinc-300 gap-1.5 hover:border-emerald-500 hover:text-emerald-600"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Remplacer le fichier
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    onChange('')
+                    setImgLoadError(false)
+                  }}
+                  className="h-8 text-xs text-zinc-400 hover:text-red-600 gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Supprimer
+                </Button>
+              </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="h-8 text-xs px-2.5 text-zinc-600 dark:text-zinc-300"
-            >
-              Remplacer
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={accept}
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                onChange('')
-                setImgLoadError(false)
-              }}
-              className="h-8 w-8 p-0 text-zinc-400 hover:text-red-600"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={accept}
+            onChange={handleFileChange}
+            className="hidden"
+          />
         </div>
       ) : (
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors rounded-xl p-5 text-center cursor-pointer bg-zinc-50/50 dark:bg-zinc-800/20 group"
+          onDragOver={(e) => {
+            e.preventDefault()
+            setIsDragOver(true)
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+            isDragOver
+              ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30 scale-[1.01]'
+              : 'border-zinc-300 dark:border-zinc-700/80 hover:border-emerald-500 dark:hover:border-emerald-500 bg-zinc-50/60 dark:bg-zinc-800/20'
+          }`}
         >
           <input
             ref={fileInputRef}
@@ -148,29 +205,65 @@ export function MediaUploader({
           />
 
           {uploading ? (
-            <div className="flex flex-col items-center justify-center gap-2 text-zinc-500 py-1">
-              <RefreshCw className="w-5 h-5 animate-spin text-emerald-600" />
-              <span className="text-xs font-medium">Téléversement vers Supabase Storage...</span>
+            <div className="flex flex-col items-center justify-center gap-2.5 text-zinc-500 py-2">
+              <RefreshCw className="w-6 h-6 animate-spin text-emerald-600" />
+              <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                Téléversement sécurisé vers Supabase Storage...
+              </span>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center gap-1.5 py-1">
-              <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Upload className="w-4 h-4" />
+            <div className="flex flex-col items-center justify-center gap-2 py-1">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center shadow-xs">
+                <Upload className="w-5 h-5" />
               </div>
-              <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                Cliquez pour téléverser ou glissez un fichier
-              </span>
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-zinc-900 dark:text-white block">
+                  Glissez-déposez votre fichier ici
+                </span>
+                <span className="text-[11px] text-zinc-500 dark:text-zinc-400 block">
+                  ou <strong className="text-emerald-600 dark:text-emerald-400 font-semibold underline">parcourez vos fichiers</strong>
+                </span>
+              </div>
               {hint ? (
-                <span className="text-[10px] text-zinc-400">{hint}</span>
+                <span className="text-[10px] text-zinc-400 font-medium">{hint}</span>
               ) : (
-                <span className="text-[10px] text-zinc-400">PNG, JPG ou PDF (max 5 MB)</span>
+                <span className="text-[10px] text-zinc-400 font-medium">PNG, JPG, SVG ou PDF (max 5 MB)</span>
               )}
             </div>
           )}
         </div>
       )}
 
-      {error && <p className="text-[11px] text-red-500">{error}</p>}
+      {error && <p className="text-[11px] text-red-500 font-medium">{error}</p>}
+
+      {/* Fullscreen Lightbox Modal */}
+      {value && !isPdf && (
+        <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+          <DialogContent className="max-w-2xl p-6 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+            <DialogTitle className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-600" />
+              Aperçu Haute Définition : {label}
+            </DialogTitle>
+            <div className="mt-4 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:10px_10px] bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center min-h-[300px]">
+              <img
+                src={value}
+                alt={label}
+                className="max-h-[400px] w-auto object-contain filter drop-shadow-md"
+              />
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLightboxOpen(false)}
+                className="text-xs"
+              >
+                Fermer
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
