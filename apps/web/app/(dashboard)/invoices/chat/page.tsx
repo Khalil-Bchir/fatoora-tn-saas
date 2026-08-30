@@ -230,7 +230,7 @@ export default function InvoiceChatPage() {
   return (
     <div className="max-w-7xl mx-auto p-3 sm:p-6 lg:p-8 space-y-5">
       {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-gradient-to-r from-emerald-950/10 via-zinc-900/5 to-transparent dark:from-emerald-950/20 dark:via-zinc-900/20 p-4 rounded-2xl border border-zinc-200/70 dark:border-zinc-800/80 backdrop-blur-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-900/70 p-4 rounded-2xl border border-zinc-200/80 dark:border-zinc-800">
         <div className="flex items-center gap-3">
           <Link href="/invoices">
             <Button
@@ -285,7 +285,7 @@ export default function InvoiceChatPage() {
           <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
             <div className="flex items-center gap-2.5">
               <div className="relative">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-xs">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
                   <Bot className="w-4 h-4" />
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900" />
@@ -319,7 +319,7 @@ export default function InvoiceChatPage() {
                       <div
                         className={`max-w-[88%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
                           isUser
-                            ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-br-xs shadow-xs font-medium'
+                            ? 'bg-emerald-600 text-white rounded-br-xs shadow-xs font-medium'
                             : 'bg-zinc-50 dark:bg-zinc-800/70 text-zinc-800 dark:text-zinc-200 rounded-bl-xs border border-zinc-200/70 dark:border-zinc-700/50 shadow-2xs'
                         }`}
                       >
@@ -764,7 +764,7 @@ export default function InvoiceChatPage() {
             <Button
               onClick={handleFinalize}
               disabled={!isReady || finalizing}
-              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold h-11 rounded-xl gap-2 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 rounded-xl gap-2 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
             >
               {finalizing ? (
                 <span className="flex items-center gap-2">
