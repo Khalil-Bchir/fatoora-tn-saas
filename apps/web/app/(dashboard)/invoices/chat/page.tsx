@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import {
   chatService,
   type ChatSession,
@@ -196,31 +197,33 @@ export default function InvoiceChatPage() {
       </div>
 
       {/* Repeat Shortcuts & Quick Chips */}
-      <div
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        className="bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-xl p-3.5 flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-none"
-      >
-        <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-emerald-600" /> Raccourcis :
-        </span>
-        {recentClients.slice(0, 2).map((c) => (
-          <button
-            key={c.id}
-            onClick={() => handleSendMessage(`Reconduire la dernière facture pour ${c.companyName || c.name}`)}
-            className="text-[11px] px-3 py-1 rounded-full bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-emerald-500 hover:text-emerald-600 border border-zinc-200 dark:border-zinc-700 transition-all shrink-0 font-medium shadow-xs"
-          >
-            Même facture pour <strong>{c.companyName || c.name}</strong>
-          </button>
-        ))}
-        {STARTER_SHORTCUTS.map((sug, i) => (
-          <button
-            key={i}
-            onClick={() => handleSendMessage(sug)}
-            className="text-[11px] px-3 py-1 rounded-full bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600 border border-zinc-200 dark:border-zinc-700 transition-all shrink-0 whitespace-nowrap shadow-xs"
-          >
-            {sug}
-          </button>
-        ))}
+      <div className="bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800 rounded-xl p-3">
+        <ScrollArea className="w-full whitespace-nowrap">
+          <div className="flex items-center gap-2 pb-2.5">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-emerald-600" /> Raccourcis :
+            </span>
+            {recentClients.slice(0, 2).map((c) => (
+              <button
+                key={c.id}
+                onClick={() => handleSendMessage(`Reconduire la dernière facture pour ${c.companyName || c.name}`)}
+                className="text-[11px] px-3 py-1.5 rounded-full bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-emerald-500 hover:text-emerald-600 border border-zinc-200 dark:border-zinc-700 transition-all shrink-0 font-medium shadow-xs"
+              >
+                Même facture pour <strong>{c.companyName || c.name}</strong>
+              </button>
+            ))}
+            {STARTER_SHORTCUTS.map((sug, i) => (
+              <button
+                key={i}
+                onClick={() => handleSendMessage(sug)}
+                className="text-[11px] px-3 py-1.5 rounded-full bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600 border border-zinc-200 dark:border-zinc-700 transition-all shrink-0 whitespace-nowrap shadow-xs"
+              >
+                {sug}
+              </button>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" className="h-2" />
+        </ScrollArea>
       </div>
 
       {/* Main Dual-Pane Grid */}
