@@ -7,20 +7,15 @@ import {
   Sparkles,
   Send,
   ArrowLeft,
-  Building2,
   FileText,
   CheckCircle2,
   Bot,
   User,
   Plus,
   ArrowRight,
-  ShieldCheck,
-  Calculator,
   RotateCcw,
   Trash2,
   Edit3,
-  Calendar,
-  CreditCard,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +35,41 @@ const STARTER_SHORTCUTS = [
   'Facturer 1 450 DT à SARL Carthage Tech pour refonte site web',
   'فاتورة لشركة الزيتونة 850 دينار صيانة برمجيات',
 ]
+
+function formatChatMessageContent(content: string) {
+  const lines = content.split('\n')
+  return lines.map((line, lIdx) => {
+    const isBullet = line.trim().startsWith('- ') || line.trim().startsWith('* ')
+    const cleanLine = isBullet ? line.trim().substring(2) : line
+
+    const parts = cleanLine.split(/(\*\*.*?\*\*)/g)
+    const formattedParts = parts.map((part, pIdx) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={pIdx} className="font-semibold text-zinc-950 dark:text-white">
+            {part.slice(2, -2)}
+          </strong>
+        )
+      }
+      return part
+    })
+
+    if (isBullet) {
+      return (
+        <div key={lIdx} className="flex items-start gap-1.5 py-0.5 pl-1">
+          <span className="text-emerald-500 font-bold">•</span>
+          <span>{formattedParts}</span>
+        </div>
+      )
+    }
+
+    return (
+      <div key={lIdx} className={line.trim() === '' ? 'h-1.5' : 'py-0.5'}>
+        {formattedParts}
+      </div>
+    )
+  })
+}
 
 export default function InvoiceChatPage() {
   const router = useRouter()
@@ -86,7 +116,6 @@ export default function InvoiceChatPage() {
     setInputValue('')
     setLoading(true)
 
-    // Optimistic message update
     const userMsg: ChatMessage = {
       role: 'user',
       content: message,
@@ -106,10 +135,19 @@ export default function InvoiceChatPage() {
     }
   }
 
+  const handleQuickReply = (qr: string) => {
+    if (qr.startsWith('✓') || qr.includes('émettre') || qr.includes('générer')) {
+      handleFinalize()
+    } else if (qr === 'Modifier le montant') {
+      setDirectEditing(true)
+    } else {
+      handleSendMessage(qr)
+    }
+  }
+
   const handleUpdateDraft = async (updates: Partial<ExtractedData>) => {
     if (!session || !extracted) return
     try {
-      // Optimistic update
       const updatedLocal = { ...extracted, ...updates }
       setExtracted(updatedLocal)
       const res = await chatService.updateDraft(session.id, updates)
@@ -162,8 +200,6 @@ export default function InvoiceChatPage() {
     }
   }
 
-  const lastAssistantMessage = [...messages].reverse().find((m) => m.role === 'assistant')
-
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
       {/* Top Header */}
@@ -180,7 +216,7 @@ export default function InvoiceChatPage() {
               Fatoora AI Builder (Génération en 1-Shot)
             </h1>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Tapez une phrase libre en français, arabe ou anglais : le système extrait tout, applique la fiscalité tunisienne et prépare votre facture.
+              Tapez une phrase libre en français, arabe ou anglais : extraction contextuelle, fiscalité tunisienne et création immédiate.
             </p>
           </div>
         </div>
@@ -229,7 +265,7 @@ export default function InvoiceChatPage() {
       {/* Main Dual-Pane Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Chat Conversation & Quick-Reply Chips */}
-        <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm flex flex-col h-[650px]">
+        <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 shadow-sm flex flex-col h-[650px] overflow-hidden">
           {/* Chat Messages */}
           <ScrollArea className="flex-1 pr-3">
             <div className="space-y-4 pb-2">
@@ -245,13 +281,13 @@ export default function InvoiceChatPage() {
                       )}
 
                       <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                        className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
                           isUser
-                            ? 'bg-emerald-600 text-white rounded-br-none shadow-xs'
-                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-bl-none border border-zinc-200/60 dark:border-zinc-700/60'
+                            ? 'bg-emerald-600 text-white rounded-br-none shadow-xs font-medium'
+                            : 'bg-zinc-100 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 rounded-bl-none border border-zinc-200/60 dark:border-zinc-700/60'
                         }`}
                       >
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        {isUser ? msg.content : formatChatMessageContent(msg.content)}
                       </div>
 
                       {isUser && (
@@ -267,8 +303,8 @@ export default function InvoiceChatPage() {
                         {msg.quickReplies.map((qr, qIdx) => (
                           <button
                             key={qIdx}
-                            onClick={() => handleSendMessage(qr)}
-                            className="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 hover:border-emerald-400 transition-colors font-medium shadow-2xs"
+                            onClick={() => handleQuickReply(qr)}
+                            className="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 hover:bg-emerald-100 hover:border-emerald-400 transition-colors font-medium shadow-2xs cursor-pointer"
                           >
                             {qr}
                           </button>
@@ -298,7 +334,7 @@ export default function InvoiceChatPage() {
               e.preventDefault()
               handleSendMessage()
             }}
-            className="flex items-center gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800"
+            className="flex items-center gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800 mt-2"
           >
             <Input
               placeholder="Écrivez librement : ex. Facture pour Acme 10h à 50 DT/h..."
@@ -318,207 +354,217 @@ export default function InvoiceChatPage() {
         </div>
 
         {/* Right Column: Live Editable Preview Panel */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-5">
-            {/* Header & Direct Edit Toggle */}
-            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-emerald-600" />
-                Aperçu Document & Édition Directe
-              </span>
-              <div className="flex items-center gap-2">
-                {extracted?.isReady && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Prête à émettre
-                  </span>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDirectEditing(!directEditing)}
-                  className="h-7 text-xs text-zinc-600 hover:text-emerald-600 gap-1"
-                >
-                  <Edit3 className="w-3 h-3" />
-                  {directEditing ? 'Aperçu Simple' : 'Modifier les Champs'}
-                </Button>
-              </div>
+        <div className="lg:col-span-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 shadow-sm flex flex-col h-[650px] overflow-hidden">
+          {/* Header & Direct Edit Toggle */}
+          <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-emerald-600" />
+              Aperçu Document & Édition Directe
+            </span>
+            <div className="flex items-center gap-2">
+              {extracted?.isReady && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200/60 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Prête à émettre
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDirectEditing(!directEditing)}
+                className="h-7 text-xs text-zinc-600 hover:text-emerald-600 gap-1"
+              >
+                <Edit3 className="w-3 h-3" />
+                {directEditing ? 'Aperçu Simple' : 'Modifier'}
+              </Button>
             </div>
+          </div>
 
-            {/* Client Section */}
-            <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-700/40 space-y-2">
-              <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
-                Destinataire (Client)
-              </span>
-              {directEditing ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Input
-                    placeholder="Nom du client ou Société"
-                    value={extracted?.clientName || ''}
-                    onChange={(e) => handleUpdateDraft({ clientName: e.target.value })}
-                    className="h-8 text-xs bg-white dark:bg-zinc-900"
-                  />
-                  <Input
-                    placeholder="Matricule Fiscal (ex: 1234567/A/M/000)"
-                    value={extracted?.clientTaxId || ''}
-                    onChange={(e) => handleUpdateDraft({ clientTaxId: e.target.value })}
-                    className="h-8 text-xs font-mono bg-white dark:bg-zinc-900"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <div className="font-bold text-sm text-zinc-900 dark:text-white">
-                    {extracted?.clientName || '— (En attente de précision)'}
+          {/* Scrollable Document Content */}
+          <ScrollArea className="flex-1 pr-3 my-3">
+            <div className="space-y-4">
+              {/* Client Section */}
+              <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-700/40 space-y-2">
+                <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
+                  Destinataire (Client)
+                </span>
+                {directEditing ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Nom du client ou Société"
+                      value={extracted?.clientName || ''}
+                      onChange={(e) => handleUpdateDraft({ clientName: e.target.value })}
+                      className="h-8 text-xs bg-white dark:bg-zinc-900"
+                    />
+                    <Input
+                      placeholder="Matricule Fiscal (ex: 1234567/A/M/000)"
+                      value={extracted?.clientTaxId || ''}
+                      onChange={(e) => handleUpdateDraft({ clientTaxId: e.target.value })}
+                      className="h-8 text-xs font-mono bg-white dark:bg-zinc-900"
+                    />
                   </div>
-                  {extracted?.clientTaxId && (
-                    <div className="text-[10px] text-zinc-400 font-mono mt-0.5">
-                      MF: {extracted.clientTaxId}
+                ) : (
+                  <div>
+                    <div className="font-bold text-sm text-zinc-900 dark:text-white">
+                      {extracted?.clientName || '— (En attente de précision)'}
                     </div>
+                    {extracted?.clientTaxId && (
+                      <div className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                        MF: {extracted.clientTaxId}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Prestations Table / Items */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
+                    Prestations & Lignes ({extracted?.items.length || 0})
+                  </span>
+                  {directEditing && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleAddItem}
+                      className="h-6 text-[11px] text-emerald-600 hover:text-emerald-700 gap-1 p-0"
+                    >
+                      <Plus className="w-3 h-3" /> Ajouter une ligne
+                    </Button>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* Prestations Table / Items */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
-                  Prestations & Lignes ({extracted?.items.length || 0})
-                </span>
-                {directEditing && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleAddItem}
-                    className="h-6 text-[11px] text-emerald-600 hover:text-emerald-700 gap-1 p-0"
-                  >
-                    <Plus className="w-3 h-3" /> Ajouter une ligne
-                  </Button>
+                {extracted?.items && extracted.items.length > 0 ? (
+                  <div className="space-y-2">
+                    {extracted.items.map((it, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/50 dark:border-zinc-700/40 space-y-2 text-xs"
+                      >
+                        {directEditing ? (
+                          <div className="grid grid-cols-12 gap-2 items-center">
+                            <div className="col-span-6">
+                              <Input
+                                value={it.description}
+                                onChange={(e) => handleUpdateItem(idx, 'description', e.target.value)}
+                                className="h-7 text-xs bg-white dark:bg-zinc-900"
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <Input
+                                type="number"
+                                value={it.quantity}
+                                onChange={(e) => handleUpdateItem(idx, 'quantity', Number(e.target.value))}
+                                className="h-7 text-xs bg-white dark:bg-zinc-900 text-center"
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <Input
+                                type="number"
+                                value={it.unitPrice}
+                                onChange={(e) => handleUpdateItem(idx, 'unitPrice', Number(e.target.value))}
+                                className="h-7 text-xs bg-white dark:bg-zinc-900 text-right"
+                              />
+                            </div>
+                            <div className="col-span-1 flex justify-end">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveItem(idx)}
+                                disabled={extracted.items.length <= 1}
+                                className="h-7 w-7 text-zinc-400 hover:text-red-600"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <div className="font-medium text-zinc-800 dark:text-zinc-200">
+                                {it.description}
+                              </div>
+                              <div className="text-[10px] text-zinc-400">
+                                Qté : {it.quantity} × {it.unitPrice.toFixed(3)} DT • TVA : {it.vatRate}%
+                              </div>
+                            </div>
+                            <div className="font-mono font-semibold text-zinc-900 dark:text-white">
+                              {(it.quantity * it.unitPrice).toFixed(3)} DT
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-6 text-center text-xs text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg">
+                    Aucun article extrait pour le moment.
+                  </div>
                 )}
               </div>
 
-              {extracted?.items && extracted.items.length > 0 ? (
-                <div className="space-y-2">
-                  {extracted.items.map((it, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/50 dark:border-zinc-700/40 space-y-2 text-xs"
-                    >
-                      {directEditing ? (
-                        <div className="grid grid-cols-12 gap-2 items-center">
-                          <div className="col-span-6">
-                            <Input
-                              value={it.description}
-                              onChange={(e) => handleUpdateItem(idx, 'description', e.target.value)}
-                              className="h-7 text-xs bg-white dark:bg-zinc-900"
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <Input
-                              type="number"
-                              value={it.quantity}
-                              onChange={(e) => handleUpdateItem(idx, 'quantity', Number(e.target.value))}
-                              className="h-7 text-xs bg-white dark:bg-zinc-900 text-center"
-                            />
-                          </div>
-                          <div className="col-span-3">
-                            <Input
-                              type="number"
-                              value={it.unitPrice}
-                              onChange={(e) => handleUpdateItem(idx, 'unitPrice', Number(e.target.value))}
-                              className="h-7 text-xs bg-white dark:bg-zinc-900 text-right"
-                            />
-                          </div>
-                          <div className="col-span-1 flex justify-end">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveItem(idx)}
-                              disabled={extracted.items.length <= 1}
-                              className="h-7 w-7 text-zinc-400 hover:text-red-600"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="font-medium text-zinc-800 dark:text-zinc-200">
-                              {it.description}
-                            </div>
-                            <div className="text-[10px] text-zinc-400">
-                              Qté : {it.quantity} × {it.unitPrice.toFixed(3)} DT • TVA : {it.vatRate}%
-                            </div>
-                          </div>
-                          <div className="font-mono font-semibold text-zinc-900 dark:text-white">
-                            {(it.quantity * it.unitPrice).toFixed(3)} DT
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-6 text-center text-xs text-zinc-400 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg">
-                  Aucun article extrait pour le moment.
+              {/* Dates & Notes in Direct Edit */}
+              {directEditing && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                  <div>
+                    <Label className="text-[10px] text-zinc-400">Date d'échéance</Label>
+                    <Input
+                      type="date"
+                      value={extracted?.dueDate || ''}
+                      onChange={(e) => handleUpdateDraft({ dueDate: e.target.value })}
+                      className="h-8 text-xs mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-zinc-400">Notes / Référence</Label>
+                    <Input
+                      placeholder="ex: Réf bon de commande #45"
+                      value={extracted?.notes || ''}
+                      onChange={(e) => handleUpdateDraft({ notes: e.target.value })}
+                      className="h-8 text-xs mt-1"
+                    />
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* Dates & Notes in Direct Edit */}
-            {directEditing && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                <div>
-                  <Label className="text-[10px] text-zinc-400">Date d'échéance</Label>
-                  <Input
-                    type="date"
-                    value={extracted?.dueDate || ''}
-                    onChange={(e) => handleUpdateDraft({ dueDate: e.target.value })}
-                    className="h-8 text-xs mt-1"
-                  />
+              {/* Fiscal Calculation Summary */}
+              <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3 space-y-2 text-xs">
+                <div className="flex justify-between text-zinc-500">
+                  <span>Total Brut Hors Taxe (HT) :</span>
+                  <span className="font-mono font-medium">
+                    {(extracted?.subtotal || 0).toFixed(3)} DT
+                  </span>
                 </div>
-                <div>
-                  <Label className="text-[10px] text-zinc-400">Notes / Référence</Label>
-                  <Input
-                    placeholder="ex: Réf bon de commande #45"
-                    value={extracted?.notes || ''}
-                    onChange={(e) => handleUpdateDraft({ notes: e.target.value })}
-                    className="h-8 text-xs mt-1"
-                  />
+                {extracted?.vatAmount && extracted.vatAmount > 0 ? (
+                  <div className="flex justify-between text-zinc-500">
+                    <span>Total TVA :</span>
+                    <span className="font-mono font-medium">
+                      {(extracted?.vatAmount || 0).toFixed(3)} DT
+                    </span>
+                  </div>
+                ) : null}
+                {extracted?.timbreFiscal && extracted.timbreFiscal > 0 ? (
+                  <div className="flex justify-between text-zinc-500">
+                    <span>Droit de Timbre Fiscal :</span>
+                    <span className="font-mono font-medium">
+                      {(extracted?.timbreFiscal || 0).toFixed(3)} DT
+                    </span>
+                  </div>
+                ) : null}
+                <div className="flex justify-between py-2 border-t border-zinc-200 dark:border-zinc-800 text-sm font-bold text-zinc-900 dark:text-white">
+                  <span>TOTAL NET TTC :</span>
+                  <span className="font-mono text-base text-emerald-600 dark:text-emerald-400">
+                    {(extracted?.total || 0).toFixed(3)} TND
+                  </span>
                 </div>
-              </div>
-            )}
-
-            {/* Fiscal Calculation Summary */}
-            <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-2 text-xs">
-              <div className="flex justify-between text-zinc-500">
-                <span>Total Brut Hors Taxe (HT) :</span>
-                <span className="font-mono font-medium">
-                  {(extracted?.subtotal || 0).toFixed(3)} DT
-                </span>
-              </div>
-              <div className="flex justify-between text-zinc-500">
-                <span>Total TVA (19%) :</span>
-                <span className="font-mono font-medium">
-                  {(extracted?.vatAmount || 0).toFixed(3)} DT
-                </span>
-              </div>
-              <div className="flex justify-between text-zinc-500">
-                <span>Droit de Timbre Fiscal :</span>
-                <span className="font-mono font-medium">
-                  {(extracted?.timbreFiscal || 1.0).toFixed(3)} DT
-                </span>
-              </div>
-              <div className="flex justify-between py-2 border-t border-zinc-200 dark:border-zinc-800 text-sm font-bold text-zinc-900 dark:text-white">
-                <span>TOTAL NET TTC :</span>
-                <span className="font-mono text-base text-emerald-600 dark:text-emerald-400">
-                  {(extracted?.total || 0).toFixed(3)} TND
-                </span>
               </div>
             </div>
+            <ScrollBar orientation="vertical" />
+          </ScrollArea>
 
-            {/* 1-Click Fast Confirm Button */}
+          {/* 1-Click Fast Confirm Button */}
+          <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
             <Button
               onClick={handleFinalize}
               disabled={!extracted?.isReady || finalizing}

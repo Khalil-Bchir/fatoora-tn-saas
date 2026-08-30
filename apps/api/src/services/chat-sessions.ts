@@ -577,6 +577,10 @@ Instructions:
       }
     }
 
+    if (clientName) {
+      clientName = clientName.replace(/^(?:named|nomm[eé]|le client|client|pour|à)\s+/i, '').trim();
+    }
+
     // If client is matched and repeat requested, clone last invoice
     if (clientName && isRepeat) {
       const lastClientInvoice = recentInvoices.find(
@@ -595,7 +599,7 @@ Instructions:
 
         const subtotal = clonedItems.reduce((acc, curr) => acc + curr.quantity * curr.unitPrice, 0);
         const vatAmount = clonedItems.reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice * curr.vatRate) / 100, 0);
-        const timbreFiscal = org?.vatRegistered ? (org?.timbreFiscalAmount ?? 1.0) : 0;
+        const timbreFiscal = org?.vatRegistered ? 1.0 : 0;
         const total = subtotal + vatAmount + timbreFiscal;
 
         const extracted: ExtractedData = {
@@ -621,16 +625,16 @@ Instructions:
     }
 
     // 4. Quantity & Unit Rate parsing: "10 hours at 50 DT", "10h à 50 DT/h", "3 jours à 400 DT"
-    const matchHourly = prompt.match(/(\d+(?:[.,]\d+)?)\s*(?:h|heures?|hrs?|jours?|j|days?)\s*(?:[àa@]|au tarif de)?\s*(\d+(?:[.,]\d+)?)\s*(?:dt|tnd|dinar|\/h|\/j)?/i);
+    const matchHourly = prompt.match(/(\d+(?:[.,]\d+)?)\s*(?:h|heures?|hrs?|jours?|j|days?)\s*(?:[àa@]|au tarif de)?\s*(\d+(?:[\s.,]\d+)?)\s*(?:dt|tnd|dinar|\/h|\/j)?/i);
     if (matchHourly && matchHourly[1] && matchHourly[2]) {
       quantity = parseFloat(matchHourly[1].replace(',', '.'));
-      unitPrice = parseFloat(matchHourly[2].replace(',', '.'));
+      unitPrice = parseFloat(matchHourly[2].replace(/\s+/g, '').replace(',', '.'));
       amount = quantity * unitPrice;
     } else {
-      // General Amount extraction: "1500 DT", "850 dinars", "2400.500 TND"
-      const matchAmount = prompt.match(/(\d+(?:[.,]\d+)?)\s*(?:dt|tnd|dinar|dinars|\u062f\u064a\u0646\u0627\u0631)/i);
+      // General Amount extraction with space support: "2 500 DT", "1500 DT", "850 dinars", "2 400.500 TND"
+      const matchAmount = prompt.match(/(?:^|\s)(\d{1,3}(?:[\s]\d{3})*(?:[.,]\d+)?|\d+(?:[.,]\d+)?)\s*(?:dt|tnd|dinar|dinars|\u062f\u064a\u0646\u0627\u0631)/i);
       if (matchAmount && matchAmount[1]) {
-        amount = parseFloat(matchAmount[1].replace(',', '.'));
+        amount = parseFloat(matchAmount[1].replace(/\s+/g, '').replace(',', '.'));
         unitPrice = amount;
         quantity = 1;
       }
@@ -652,17 +656,28 @@ Instructions:
       dueDate = d.toISOString().split('T')[0] as string;
     }
 
-    const items = [...existing.items];
+    let items = [...existing.items];
     const defaultVat = org?.vatRegistered ? (org?.defaultVatRate ?? 19) : 0;
 
     if (amount > 0) {
-      items.push({
-        description: desc || 'Prestation de services & conseil IT',
-        quantity,
-        unitPrice,
-        vatRate: defaultVat,
-        total: amount + (amount * defaultVat) / 100,
-      });
+      if (items.length > 0) {
+        items[0] = {
+          ...items[0],
+          description: desc || items[0]!.description || 'Prestation de services & conseil IT',
+          quantity,
+          unitPrice,
+          vatRate: defaultVat,
+          total: amount + (amount * defaultVat) / 100,
+        };
+      } else {
+        items.push({
+          description: desc || 'Prestation de services & conseil IT',
+          quantity,
+          unitPrice,
+          vatRate: defaultVat,
+          total: amount + (amount * defaultVat) / 100,
+        });
+      }
     }
 
     const subtotal = items.reduce((acc, curr) => acc + curr.quantity * curr.unitPrice, 0);
@@ -670,7 +685,7 @@ Instructions:
       (acc, curr) => acc + (curr.quantity * curr.unitPrice * curr.vatRate) / 100,
       0
     );
-    const timbreFiscal = org?.vatRegistered ? (org?.timbreFiscalAmount ?? 1.0) : 0;
+    const timbreFiscal = org?.vatRegistered ? 1.0 : 0;
     const total = subtotal + vatAmount + timbreFiscal;
 
     const isReady = items.length > 0 && !!clientName;
@@ -693,7 +708,7 @@ Instructions:
 
     let reply = '';
     if (isReady) {
-      reply = `J'ai préparé votre facture pour **${extracted.clientName}** :\n- **Total HT** : ${extracted.subtotal.toFixed(3)} DT\n- **TVA (${defaultVat}%)** : ${extracted.vatAmount.toFixed(3)} DT\n- **Timbre Fiscal** : ${extracted.timbreFiscal.toFixed(3)} DT\n- **TOTAL TTC** : **${extracted.total.toFixed(3)} TND**\n\nVous pouvez valider en 1 clic ou ajuster les champs sur le panneau de droite.`;
+      reply = `J'ai préparé votre facture pour **${extracted.clientName}** :\n- **Total HT** : ${extracted.subtotal.toFixed(3)} DT\n${defaultVat > 0 ? `- **TVA (${defaultVat}%)** : ${extracted.vatAmount.toFixed(3)} DT\n` : ''}${extracted.timbreFiscal > 0 ? `- **Timbre Fiscal** : ${extracted.timbreFiscal.toFixed(3)} DT\n` : ''}- **TOTAL TTC** : **${extracted.total.toFixed(3)} TND**\n\nVous pouvez valider en 1 clic ou ajuster les champs sur le panneau de droite.`;
       quickReplies = ['✓ Tout est bon, émettre', 'Modifier le montant', 'Ajouter une note'];
     } else if (items.length > 0 && !clientName) {
       reply = `J'ai extrait le montant de **${extracted.subtotal.toFixed(3)} DT** (${items[0]?.description}).\n\nPour quel client souhaitez-vous émettre cette facture ?`;
