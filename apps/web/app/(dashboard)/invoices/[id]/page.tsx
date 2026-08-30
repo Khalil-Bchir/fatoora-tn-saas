@@ -39,6 +39,7 @@ import { Input } from '@/components/ui/input'
 import { invoiceService, type Invoice } from '@/features/invoices/services/invoice-service'
 import { paymentService } from '@/features/payments/services/payment-service'
 import { numberToTunisianDinars } from '@/lib/number-to-words'
+import { printInvoiceDocument } from '@/lib/print-invoice'
 
 export default function InvoiceDetailPage({
   params,
@@ -154,14 +155,7 @@ export default function InvoiceDetailPage({
   }
 
   const handlePrint = () => {
-    const originalTitle = document.title
-    if (invoice?.invoiceNumber) {
-      document.title = `Facture_${invoice.invoiceNumber}`
-    }
-    window.print()
-    setTimeout(() => {
-      document.title = originalTitle
-    }, 1000)
+    printInvoiceDocument('invoice-document', invoice?.invoiceNumber)
   }
 
   if (loading) {
