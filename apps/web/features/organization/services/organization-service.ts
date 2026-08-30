@@ -7,6 +7,8 @@ export interface Organization {
   logoUrl?: string | null
   stampUrl?: string | null
   signatureUrl?: string | null
+  stampImageUrl?: string | null
+  signatureImageUrl?: string | null
   taxId?: string | null
   taxRegime?: string | null
   vatRegistered: boolean

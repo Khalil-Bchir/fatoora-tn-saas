@@ -52,6 +52,8 @@ export default function OrganizationSettingsPage() {
           setFormData((prev) => ({
             ...prev,
             ...org,
+            stampUrl: org.stampImageUrl || org.stampUrl || prev.stampUrl || '',
+            signatureUrl: org.signatureImageUrl || org.signatureUrl || prev.signatureUrl || '',
           }))
         }
       } catch (err) {
@@ -67,7 +69,12 @@ export default function OrganizationSettingsPage() {
     e.preventDefault()
     try {
       setSaving(true)
-      await organizationService.updateOrganization(formData)
+      const payload = {
+        ...formData,
+        stampImageUrl: formData.stampUrl || formData.stampImageUrl || null,
+        signatureImageUrl: formData.signatureUrl || formData.signatureImageUrl || null,
+      }
+      await organizationService.updateOrganization(payload)
       setSavedSuccess(true)
       setTimeout(() => setSavedSuccess(false), 3000)
     } catch (err) {

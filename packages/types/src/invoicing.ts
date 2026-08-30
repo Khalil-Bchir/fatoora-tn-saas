@@ -146,26 +146,28 @@ export interface CreateClientRequest {
 
 export interface UpdateOrganizationRequest {
   name?: string;
-  activityType?: string;
+  activityType?: string | null;
   taxRegime?: TaxRegime;
   vatRegistered?: boolean;
-  taxId?: string;
-  address?: string;
-  city?: string;
-  postalCode?: string;
+  taxId?: string | null;
+  address?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
   country?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  bankName?: string;
-  bankRib?: string;
-  bankIban?: string;
-  bankBic?: string;
-  stampImageUrl?: string;
-  signatureImageUrl?: string;
-  logoUrl?: string;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  bankName?: string | null;
+  bankRib?: string | null;
+  bankIban?: string | null;
+  bankBic?: string | null;
+  stampImageUrl?: string | null;
+  signatureImageUrl?: string | null;
+  stampUrl?: string | null;
+  signatureUrl?: string | null;
+  logoUrl?: string | null;
   invoicePrefix?: string;
   currency?: string;
   defaultVatRate?: number;
-  defaultPaymentTerms?: string;
+  defaultPaymentTerms?: string | null;
 }
