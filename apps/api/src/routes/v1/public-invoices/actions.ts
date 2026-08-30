@@ -6,6 +6,7 @@ import {
   submitPublicPaymentProofRoute,
 } from '../../../schema/v1/public-invoices.schema.js';
 import { InvoicesService } from '../../../services/invoices.js';
+import { StorageService } from '../../../services/storage.js';
 import { logger } from '../../../utils/logger.js';
 
 const handler = new OpenAPIHono<Env>();
@@ -64,11 +65,20 @@ handler.openapi(submitPublicPaymentProofRoute, async (c) => {
       );
     }
 
+    let finalFileUrl = body.fileUrl;
+    if (body.fileUrl && body.fileUrl.startsWith('data:')) {
+      finalFileUrl = await StorageService.uploadBase64(
+        body.fileUrl,
+        `proof_${invoice.invoiceNumber || 'invoice'}.png`,
+        'payment-proofs'
+      );
+    }
+
     const proof = await prisma.paymentProof.create({
       data: {
         organizationId: invoice.organizationId,
         invoiceId: invoice.id,
-        fileUrl: body.fileUrl,
+        fileUrl: finalFileUrl,
         amount: body.amount ?? invoice.total,
         notes: body.notes || null,
         status: 'SUBMITTED',

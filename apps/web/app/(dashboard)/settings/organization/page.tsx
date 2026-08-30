@@ -16,6 +16,7 @@ import {
   organizationService,
   type Organization,
 } from '@/features/organization/services/organization-service'
+import { MediaUploader } from '@/components/ui/media-uploader'
 
 export default function OrganizationSettingsPage() {
   const [formData, setFormData] = useState<Partial<Organization>>({
@@ -262,28 +263,24 @@ export default function OrganizationSettingsPage() {
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm space-y-4">
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-white border-b border-zinc-100 dark:border-zinc-800 pb-3 flex items-center gap-2">
             <FileCheck2 className="w-4 h-4 text-emerald-600" />
-            3. Visuels Officiels (Cachet & Signature)
+            3. Visuels Officiels (Supabase Storage)
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs">Lien Image Cachet Entreprise</Label>
-              <Input
-                placeholder="https://.../cachet.png"
-                value={formData.stampUrl || ''}
-                onChange={(e) => setFormData({ ...formData, stampUrl: e.target.value })}
-                className="h-9 text-xs mt-1 font-mono"
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Lien Image Signature Gérant</Label>
-              <Input
-                placeholder="https://.../signature.png"
-                value={formData.signatureUrl || ''}
-                onChange={(e) => setFormData({ ...formData, signatureUrl: e.target.value })}
-                className="h-9 text-xs mt-1 font-mono"
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MediaUploader
+              label="Cachet de l'Entreprise"
+              folder="stamps"
+              value={formData.stampUrl}
+              onChange={(url) => setFormData({ ...formData, stampUrl: url })}
+              hint="Format PNG transparent recommandé (max 5 MB)"
+            />
+            <MediaUploader
+              label="Signature du Gérant / Responsable"
+              folder="signatures"
+              value={formData.signatureUrl}
+              onChange={(url) => setFormData({ ...formData, signatureUrl: url })}
+              hint="Signature scannée sur fond transparent (max 5 MB)"
+            />
           </div>
         </div>
 

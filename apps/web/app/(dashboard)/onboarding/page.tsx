@@ -20,6 +20,7 @@ import {
   organizationService,
   type Organization,
 } from '@/features/organization/services/organization-service'
+import { MediaUploader } from '@/components/ui/media-uploader'
 
 const STEPS = [
   { id: 1, title: 'Profil & Fiscalité', icon: Building2 },
@@ -248,31 +249,20 @@ export default function OnboardingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="p-5 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl text-center space-y-3 bg-zinc-50/50 dark:bg-zinc-800/30">
-                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block">
-                  Lien image Cachet Entreprise
-                </span>
-                <Input
-                  placeholder="https://.../cachet.png"
-                  value={formData.stampUrl || ''}
-                  onChange={(e) => setFormData({ ...formData, stampUrl: e.target.value })}
-                  className="h-8 text-xs font-mono"
-                />
-                <p className="text-[10px] text-zinc-400">Format PNG transparent recommandé (max 500x500px)</p>
-              </div>
-
-              <div className="p-5 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl text-center space-y-3 bg-zinc-50/50 dark:bg-zinc-800/30">
-                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block">
-                  Lien image Signature Gérant
-                </span>
-                <Input
-                  placeholder="https://.../signature.png"
-                  value={formData.signatureUrl || ''}
-                  onChange={(e) => setFormData({ ...formData, signatureUrl: e.target.value })}
-                  className="h-8 text-xs font-mono"
-                />
-                <p className="text-[10px] text-zinc-400">Signature manuscrite scannée sur fond blanc ou transparent</p>
-              </div>
+              <MediaUploader
+                label="Cachet de l'Entreprise"
+                folder="stamps"
+                value={formData.stampUrl}
+                onChange={(url) => setFormData({ ...formData, stampUrl: url })}
+                hint="Format PNG transparent recommandé (max 5 MB)"
+              />
+              <MediaUploader
+                label="Signature du Gérant / Responsable"
+                folder="signatures"
+                value={formData.signatureUrl}
+                onChange={(url) => setFormData({ ...formData, signatureUrl: url })}
+                hint="Signature scannée sur fond transparent (max 5 MB)"
+              />
             </div>
           </div>
         )}

@@ -311,29 +311,43 @@ export default function PublicInvoicePage() {
               ) : (
                 <form onSubmit={handleSubmitProof} className="space-y-4">
                   <div>
-                    <Label className="text-xs">
-                      Lien du justificatif de virement (Google Drive, Dropbox, ou image hébergée) *
+                    <Label className="text-xs font-semibold">
+                      Justificatif de virement bancaire (Image du reçu ou PDF) *
                     </Label>
-                    <Input
-                      required
-                      value={proofFileUrl}
-                      onChange={(e) => setProofFileUrl(e.target.value)}
-                      placeholder="https://drive.google.com/file/... ou URL du reçu"
-                      className="mt-1 bg-card"
-                    />
+                    <div className="mt-1.5">
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp, application/pdf"
+                        required={!proofFileUrl}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            const reader = new FileReader()
+                            reader.onload = () => setProofFileUrl(reader.result as string)
+                            reader.readAsDataURL(file)
+                          }
+                        }}
+                        className="w-full text-xs text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer border rounded-md p-1 bg-card"
+                      />
+                    </div>
+                    {proofFileUrl && (
+                      <p className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Fichier sélectionné, prêt à être transmis vers le stockage sécurisé.
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <Label className="text-xs">Remarques ou référence du virement</Label>
+                    <Label className="text-xs">Remarques ou référence du virement (optionnel)</Label>
                     <Textarea
                       value={proofNotes}
                       onChange={(e) => setProofNotes(e.target.value)}
-                      placeholder="ex. Virement exécuté le 15/03 sous référence VIR-98234"
+                      placeholder="ex. Virement exécuté sous la référence VIR-98234"
                       className="mt-1 bg-card min-h-[60px]"
                     />
                   </div>
-                  <Button type="submit" disabled={isSubmittingProof} className="w-full gap-2">
+                  <Button type="submit" disabled={isSubmittingProof || !proofFileUrl} className="w-full gap-2 font-semibold">
                     <Upload className="w-4 h-4" />
-                    {isSubmittingProof ? 'Envoi en cours...' : 'Envoyer la preuve de virement'}
+                    {isSubmittingProof ? 'Téléversement vers Supabase Storage...' : 'Téléverser et confirmer le virement'}
                   </Button>
                 </form>
               )}
